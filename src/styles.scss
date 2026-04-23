@@ -79,6 +79,11 @@
     color: var(--mb-text-secondary);
   }
 
+  /** Extra breathing room below page header for first stats row on small screens (all roles). */
+  .mb-page-stats-lead {
+    @apply max-sm:pt-7 sm:pt-0;
+  }
+
   .mb-toolbar {
     @apply mb-2.5 flex flex-col gap-3 rounded-2xl border p-3 shadow-mb-card backdrop-blur-sm sm:flex-row sm:flex-wrap sm:items-center md:mb-3 lg:gap-4 lg:p-4 dark:shadow-mb-card-dark;
     border-color: var(--mb-border);
@@ -127,7 +132,7 @@
   }
 
   .mb-input {
-    @apply w-full rounded-xl border px-4 py-3.5 text-sm font-medium leading-snug shadow-sm transition-all duration-200;
+    @apply w-full rounded-xl border px-4 py-3 text-base font-medium leading-snug shadow-sm transition-all duration-200 sm:py-3.5;
     border-color: var(--mb-border);
     background-color: var(--mb-input-bg);
     color: var(--mb-text-primary);
@@ -149,6 +154,31 @@
 
   .mb-input:disabled {
     @apply cursor-not-allowed opacity-55;
+  }
+
+  /** Composite phone field — same chrome as `.mb-input` (border, radius, height, focus). */
+  .mb-phone-input-shell {
+    @apply flex w-full items-stretch overflow-hidden rounded-xl border text-base font-medium leading-snug shadow-sm transition-all duration-200;
+    border-color: var(--mb-border);
+    background-color: var(--mb-input-bg);
+    color: var(--mb-text-primary);
+  }
+
+  .mb-phone-input-shell:focus-within {
+    @apply outline-none shadow-md;
+    border-color: var(--mb-primary);
+    box-shadow:
+      0 0 0 3px var(--mb-primary-soft),
+      0 4px 12px -4px var(--mb-primary-glow);
+  }
+
+  .mb-phone-input-shell.is-disabled {
+    @apply pointer-events-none cursor-not-allowed opacity-55;
+  }
+
+  .mb-phone-input-national::placeholder {
+    color: var(--mb-text-secondary);
+    opacity: 0.75;
   }
 
   textarea.mb-input {
@@ -192,6 +222,7 @@
   .mb-page-header {
     @apply pb-2.5 md:pb-3;
   }
+
 }
 
 @media print {

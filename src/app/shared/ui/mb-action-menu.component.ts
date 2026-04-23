@@ -28,7 +28,7 @@ export interface MbActionMenuItem {
       </button>
       @if (menuOpen()) {
         <div
-          class="absolute right-0 z-50 mt-1.5 min-w-[12rem] overflow-hidden rounded-2xl border border-mb-border bg-mb-surface/98 py-1 shadow-modal backdrop-blur-md dark:bg-mb-elevated/98 dark:shadow-modal-dark"
+          class="absolute right-0 z-50 mt-1.5 min-w-[12rem] overflow-hidden rounded-2xl border border-mb-border bg-mb-surface py-1 shadow-modal dark:shadow-modal-dark"
           role="menu"
           (click)="$event.stopPropagation()"
         >

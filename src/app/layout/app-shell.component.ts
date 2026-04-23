@@ -51,7 +51,7 @@ type QuickAction =
             ? 'translate-x-0'
             : '-translate-x-full lg:translate-x-0'
         "
-        class="fixed inset-y-0 left-0 z-50 flex w-[17.5rem] flex-col border-r border-mb-border bg-mb-surface/95 backdrop-blur-md transition-transform duration-200 ease-out lg:static lg:z-0"
+        class="fixed inset-y-0 left-0 z-50 flex w-[17.5rem] flex-col border-r border-mb-border bg-mb-surface shadow-[inset_-1px_0_0_var(--mb-border-subtle)] transition-transform duration-200 ease-out lg:static lg:z-0"
       >
         <div class="flex h-[4.25rem] items-center gap-3 border-b border-mb-border px-5">
           @if (branding.logoDataUrl(); as logo) {
@@ -140,7 +140,7 @@ type QuickAction =
         <div class="border-t border-mb-border p-4">
           <button
             type="button"
-            class="flex w-full min-w-0 items-center gap-3 rounded-xl border border-mb-border bg-mb-elevated/40 px-3 py-3 text-left transition hover:border-mb-primary/40 hover:bg-[var(--mb-hover-row)] dark:bg-mb-elevated/50"
+            class="flex w-full min-w-0 items-center gap-3 rounded-xl border border-mb-border bg-mb-bg px-3 py-3 text-left transition hover:border-mb-primary hover:bg-[var(--mb-hover-row)] dark:bg-mb-elevated"
             (click)="openAccountMenu(); mobileNav.set(false)"
           >
             @if (auth.currentUser(); as u) {
@@ -156,7 +156,7 @@ type QuickAction =
 
       <div class="flex min-w-0 flex-1 flex-col lg:pl-0">
         <header
-          class="sticky top-0 z-30 flex h-[4.25rem] items-center justify-between gap-4 border-b border-mb-border bg-mb-surface/85 px-4 backdrop-blur-lg lg:px-9"
+          class="sticky top-0 z-30 flex h-[4.25rem] items-center justify-between gap-4 border-b border-mb-border bg-mb-surface px-4 lg:px-9"
         >
           <div class="flex items-center gap-3">
             <button
@@ -183,7 +183,7 @@ type QuickAction =
           </div>
           <div class="flex min-w-0 items-center gap-2">
             <div
-              class="flex shrink-0 items-center rounded-xl border border-mb-border bg-mb-elevated/50 p-0.5 shadow-sm"
+              class="flex shrink-0 items-center rounded-xl border border-mb-border bg-mb-bg p-0.5 shadow-sm dark:bg-mb-elevated"
               role="group"
               aria-label="Language"
             >
@@ -269,7 +269,7 @@ type QuickAction =
       >
         <div class="pointer-events-auto px-3 pb-1">
           <div
-            class="mb-2 flex gap-2 overflow-x-auto rounded-2xl border border-mb-border bg-mb-surface/95 px-2 py-2 shadow-lg shadow-slate-900/10 backdrop-blur-xl dark:shadow-black/45"
+            class="mb-2 flex gap-2 overflow-x-auto rounded-2xl border border-mb-border bg-mb-surface px-2 py-2 shadow-lg shadow-slate-900/10 dark:shadow-black/45"
           >
             @for (q of quickActions(); track q.label) {
               @if (isSaleAction(q)) {
@@ -298,7 +298,7 @@ type QuickAction =
             }
           </div>
           <nav
-            class="flex h-[3.75rem] items-stretch justify-around gap-0.5 rounded-2xl border border-mb-border bg-mb-surface/95 px-1 py-0.5 shadow-lg shadow-slate-900/10 backdrop-blur-xl dark:shadow-black/45"
+            class="flex h-[3.75rem] items-stretch justify-around gap-0.5 rounded-2xl border border-mb-border bg-mb-surface px-1 py-0.5 shadow-lg shadow-slate-900/10 dark:shadow-black/45"
             aria-label="Primary"
           >
             @for (tab of mobileTabs(); track tab.path) {

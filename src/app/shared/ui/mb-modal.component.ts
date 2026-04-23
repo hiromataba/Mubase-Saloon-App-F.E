@@ -14,7 +14,7 @@ import { DOCUMENT } from '@angular/common';
   template: `
     @if (open()) {
       <div
-        class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 animate-fade-in"
+        class="fixed inset-0 z-50 flex items-center justify-center px-2 py-4 sm:p-8 animate-fade-in"
         role="dialog"
         aria-modal="true"
         [attr.aria-labelledby]="title() ? 'mb-modal-title' : null"
@@ -31,7 +31,7 @@ import { DOCUMENT } from '@angular/common';
           (click)="$event.stopPropagation()"
         >
           <div
-            class="flex shrink-0 items-start justify-between gap-4 border-b border-mb-border bg-mb-elevated/40 px-6 py-5 backdrop-blur-sm dark:bg-mb-elevated/25 sm:px-8"
+            class="flex shrink-0 items-start justify-between gap-3 border-b border-mb-border bg-mb-elevated px-3 py-4 sm:gap-4 sm:px-8 sm:py-5 dark:bg-mb-elevated"
           >
             <div class="min-w-0 pr-2">
               @if (title()) {
@@ -57,12 +57,12 @@ import { DOCUMENT } from '@angular/common';
               </svg>
             </button>
           </div>
-          <div class="min-h-0 flex-1 overflow-y-auto bg-mb-surface px-6 py-7 sm:px-8 sm:py-8">
+          <div class="min-h-0 flex-1 overflow-y-auto bg-mb-surface px-3 py-5 sm:px-8 sm:py-8">
             <ng-content />
           </div>
           @if (footer()) {
             <div
-              class="shrink-0 border-t border-mb-border bg-mb-elevated/50 px-6 py-4 backdrop-blur-md dark:bg-mb-elevated/35 sm:px-8"
+              class="shrink-0 border-t border-mb-border bg-mb-elevated px-3 py-3 sm:px-8 sm:py-4 dark:bg-mb-elevated"
             >
               <ng-content select=".mb-modal-footer-actions" />
             </div>

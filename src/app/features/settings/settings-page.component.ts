@@ -145,9 +145,9 @@ import { MbCardComponent } from '../../shared/ui/mb-card.component';
         </dl>
       </mb-card>
 
-      <mb-card class="!mt-10 md:!mt-12 lg:!mt-14" title="Demo mode" subtitle="Replacing with API later">
+      <!-- <mb-card class="!mt-10 md:!mt-12 lg:!mt-14" title="Demo mode" subtitle="Replacing with API later">
         <p class="text-sm text-slate-600 dark:text-slate-400">{{ demoHint }}</p>
-      </mb-card>
+      </mb-card> -->
     </div>
   `,
 })

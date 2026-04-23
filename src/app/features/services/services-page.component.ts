@@ -38,7 +38,7 @@ import { formatUsd } from '../../shared/formatters';
         <p class="mb-page-sub">Catalog by branch · pricing reference</p>
       </div>
 
-      <mb-quick-stats-row>
+      <mb-quick-stats-row lead>
         <mb-quick-stat-tile variant="violet" label="Services" [value]="'' + catalogStats().items" />
         <mb-quick-stat-tile variant="emerald" label="Active" [value]="'' + catalogStats().active" />
         <mb-quick-stat-tile variant="amber" label="Avg price" [value]="formatUsd(catalogStats().avgPrice)" />

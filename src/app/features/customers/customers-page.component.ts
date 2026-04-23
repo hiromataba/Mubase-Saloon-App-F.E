@@ -10,6 +10,7 @@ import { MbCardComponent } from '../../shared/ui/mb-card.component';
 import { MbConfirmDialogComponent } from '../../shared/ui/mb-confirm-dialog.component';
 import { MbFieldComponent } from '../../shared/ui/mb-field.component';
 import { MbModalComponent } from '../../shared/ui/mb-modal.component';
+import { MbPhoneInputComponent } from '../../shared/ui/mb-phone-input.component';
 import { MbAvatarComponent } from '../../shared/ui/mb-avatar.component';
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
@@ -34,6 +35,7 @@ import { formatDateTime } from '../../shared/formatters';
     MbTablePaginatorComponent,
     MbAvatarComponent,
     MbSelectComponent,
+    MbPhoneInputComponent,
   ],
   template: `
     <div class="mx-auto max-w-7xl space-y-6 md:space-y-8 lg:space-y-10">
@@ -56,7 +58,7 @@ import { formatDateTime } from '../../shared/formatters';
         </div>
       </div>
 
-      <mb-quick-stats-row>
+      <mb-quick-stats-row lead>
         <mb-quick-stat-tile variant="violet" label="Customers" [value]="'' + customerStats().count" />
         <mb-quick-stat-tile variant="emerald" label="Total visits" [value]="'' + customerStats().visits" />
         <mb-quick-stat-tile
@@ -175,10 +177,10 @@ import { formatDateTime } from '../../shared/formatters';
           <input class="mb-input" formControlName="fullName" />
         </mb-field>
         <mb-field label="Phone">
-          <input class="mb-input" formControlName="phone" />
+          <mb-phone-input formControlName="phone" />
         </mb-field>
         <mb-field label="WhatsApp">
-          <input class="mb-input" formControlName="whatsapp" />
+          <mb-phone-input formControlName="whatsapp" />
         </mb-field>
         <mb-field label="Notes">
           <textarea class="mb-input min-h-[88px] resize-y" formControlName="notes"></textarea>

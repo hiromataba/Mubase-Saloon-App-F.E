@@ -43,7 +43,7 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
         <mb-btn (click)="openInvite()">Create staff & assign</mb-btn>
       </div>
 
-      <mb-quick-stats-row>
+      <mb-quick-stats-row lead>
         <mb-quick-stat-tile variant="violet" label="Assignments" [value]="'' + staffStats().total" />
         <mb-quick-stat-tile variant="emerald" label="Managers" [value]="'' + staffStats().managers" />
         <mb-quick-stat-tile variant="amber" label="Accountants" [value]="'' + staffStats().accountants" />

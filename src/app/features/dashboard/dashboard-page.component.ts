@@ -59,7 +59,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
         </div>
       </div>
 
-      <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-4 lg:gap-8">
+      <div class="mb-page-stats-lead grid gap-6 sm:grid-cols-2 xl:grid-cols-4 lg:gap-8">
         <mb-stat-card
           icon="revenue"
           label="Gross revenue"

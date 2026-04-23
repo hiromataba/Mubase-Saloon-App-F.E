@@ -55,7 +55,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
         </p>
       </mb-card>
 
-      <mb-quick-stats-row>
+      <mb-quick-stats-row lead>
         <mb-quick-stat-tile
           variant="violet"
           label="Today"

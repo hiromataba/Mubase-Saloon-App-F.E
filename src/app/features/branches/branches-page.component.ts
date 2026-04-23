@@ -11,6 +11,7 @@ import { MbCardComponent } from '../../shared/ui/mb-card.component';
 import { MbConfirmDialogComponent } from '../../shared/ui/mb-confirm-dialog.component';
 import { MbFieldComponent } from '../../shared/ui/mb-field.component';
 import { MbModalComponent } from '../../shared/ui/mb-modal.component';
+import { MbPhoneInputComponent } from '../../shared/ui/mb-phone-input.component';
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-select.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
@@ -31,6 +32,7 @@ import { formatUsd } from '../../shared/formatters';
     MbQuickStatsRowComponent,
     MbQuickStatTileComponent,
     MbSelectComponent,
+    MbPhoneInputComponent,
   ],
   template: `
     <div class="mx-auto max-w-7xl space-y-6 md:space-y-8 lg:space-y-10">
@@ -44,7 +46,7 @@ import { formatUsd } from '../../shared/formatters';
         }
       </div>
 
-      <mb-quick-stats-row>
+      <mb-quick-stats-row lead>
         <mb-quick-stat-tile variant="violet" label="Locations" [value]="'' + branchPortfolioStats().count" />
         <mb-quick-stat-tile variant="emerald" label="Active" [value]="'' + branchPortfolioStats().active" />
         <mb-quick-stat-tile
@@ -186,7 +188,7 @@ import { formatUsd } from '../../shared/formatters';
           <input class="mb-input" formControlName="address" />
         </mb-field>
         <mb-field label="Phone">
-          <input class="mb-input" formControlName="phone" />
+          <mb-phone-input formControlName="phone" />
         </mb-field>
         <mb-field label="Status">
           <mb-select formControlName="isActive" [options]="activeStatusOptions" placeholder="Status" />

@@ -46,7 +46,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
           <mb-btn variant="secondary" (click)="go('/transactions')">Transaction history</mb-btn>
         </div>
 
-        <div class="grid gap-6 sm:grid-cols-3 lg:gap-8">
+        <div class="mb-page-stats-lead grid gap-6 sm:grid-cols-3 lg:gap-8">
           <mb-stat-card
             icon="revenue"
             label="Your earnings"

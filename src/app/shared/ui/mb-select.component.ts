@@ -60,7 +60,7 @@ let mbSelectUid = 0;
       @if (open()) {
         <button
           type="button"
-          class="fixed inset-0 z-[90] cursor-default border-0 bg-[var(--mb-backdrop)]/25 backdrop-blur-[2px] dark:bg-[var(--mb-backdrop)]/35"
+          class="fixed inset-0 z-[90] cursor-default border-0 bg-transparent"
           aria-hidden="true"
           tabindex="-1"
           (click)="close()"

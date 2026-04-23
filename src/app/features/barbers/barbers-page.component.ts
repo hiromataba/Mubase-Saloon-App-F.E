@@ -57,7 +57,7 @@ import { formatPct, formatUsd } from '../../shared/formatters';
         </div>
       </div>
 
-      <mb-quick-stats-row>
+      <mb-quick-stats-row lead>
         <mb-quick-stat-tile variant="violet" label="Barbers" [value]="'' + barberStats().total" hint="In view" />
         <mb-quick-stat-tile variant="emerald" label="Active" [value]="'' + barberStats().active" />
         <mb-quick-stat-tile

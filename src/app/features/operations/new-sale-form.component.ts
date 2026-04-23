@@ -8,12 +8,20 @@ import { formatPct, formatUsd } from '../../shared/formatters';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
 import { MbButtonComponent } from '../../shared/ui/mb-button.component';
 import { MbFieldComponent } from '../../shared/ui/mb-field.component';
+import { MbPhoneInputComponent } from '../../shared/ui/mb-phone-input.component';
 import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-select.component';
 
 @Component({
   standalone: true,
   selector: 'app-new-sale-form',
-  imports: [ReactiveFormsModule, MbFieldComponent, MbButtonComponent, MbBadgeComponent, MbSelectComponent],
+  imports: [
+    ReactiveFormsModule,
+    MbFieldComponent,
+    MbButtonComponent,
+    MbBadgeComponent,
+    MbSelectComponent,
+    MbPhoneInputComponent,
+  ],
   template: `
     <form class="space-y-8" [formGroup]="form" (ngSubmit)="submit()">
       <div
@@ -56,10 +64,10 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
             <input formControlName="customerName" class="mb-input" />
           </mb-field>
           <mb-field label="Phone" [optional]="true">
-            <input formControlName="customerPhone" class="mb-input" />
+            <mb-phone-input formControlName="customerPhone" />
           </mb-field>
           <mb-field label="WhatsApp" [optional]="true">
-            <input formControlName="customerWhatsapp" class="mb-input" placeholder="+1…" />
+            <mb-phone-input formControlName="customerWhatsapp" />
           </mb-field>
         </div>
       </div>
@@ -71,7 +79,7 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
           <p class="mb-section-label font-semibold text-mb-primary">Checkout summary</p>
           <mb-badge tone="info" [caps]="false">Live split</mb-badge>
         </div>
-        <dl class="mt-5 grid gap-4 sm:grid-cols-3">
+        <dl class="mt-6 grid gap-4 sm:grid-cols-3 sm:mt-7">
           <div class="rounded-xl border border-mb-border bg-mb-surface px-4 py-3.5 shadow-sm dark:bg-mb-bg">
             <dt class="text-xs font-medium text-mb-text-secondary">Barber %</dt>
             <dd class="mt-1 font-display text-lg font-semibold tabular-nums text-mb-text-primary">

@@ -1,19 +1,31 @@
 /**
- * Default avatars live in `src/assets/avatars/` and are copied to `/assets/avatars/` at build
- * (see `angular.json`). Replace or extend those files with real photos; mapping stays stable
- * per seed (user id, customer id, etc.).
+ * Default avatars are the photos in `src/assets/avatars/` (copied to `assets/avatars/` at build).
+ * Filenames with spaces are URL-encoded in the returned path. Mapping stays stable per seed.
  */
 const ASSET_AVATAR_FILES = [
-  'avatar-01.svg',
-  'avatar-02.svg',
-  'avatar-03.svg',
-  'avatar-04.svg',
-  'avatar-05.svg',
-  'avatar-06.svg',
-  'avatar-07.svg',
-  'avatar-08.svg',
-  'avatar-09.svg',
-  'avatar-10.svg',
+  'IMG_4530.jpg',
+  'IMG_4530 (1).jpg',
+  'IMG_4530 (2).jpg',
+  'IMG_4530 (3).jpg',
+  'IMG_4530 (4).jpg',
+  'IMG_4530 (5).jpg',
+  'IMG_4530 (6).jpg',
+  'IMG_4530 (7).jpg',
+  'IMG_4530 (8).jpg',
+  'IMG_4530 (9).jpg',
+  'IMG_4530 (10).jpg',
+  'IMG_4530 (11).jpg',
+  'IMG_4530 (12).jpg',
+  'IMG_4546.jpg',
+  'IMG_4546 (1).jpg',
+  'IMG_4546 (2).jpg',
+  'IMG_4546 (3).jpg',
+  'IMG_4546 (4).jpg',
+  'IMG_4546 (5).jpg',
+  'IMG_4546 (6).jpg',
+  'IMG_4546 (7).jpg',
+  'IMG_4546 (8).jpg',
+  'IMG_4546 (9).jpg',
 ] as const;
 
 function hashSeed(seed: string): number {
@@ -24,8 +36,9 @@ function hashSeed(seed: string): number {
   return Math.abs(h);
 }
 
-/** Deterministic `/assets/avatars/...` URL from any string id (no network). */
+/** Deterministic `assets/avatars/...` URL from any string id (bundled JPEGs, no network). */
 export function bundledAvatarUrl(seed: string): string {
   const i = hashSeed(seed) % ASSET_AVATAR_FILES.length;
-  return `assets/avatars/${ASSET_AVATAR_FILES[i]}`;
+  const file = ASSET_AVATAR_FILES[i];
+  return `assets/avatars/${encodeURIComponent(file)}`;
 }
