@@ -1,3 +1,5 @@
+import { MB_PHONE_COUNTRIES_DATA } from './phone-countries.data';
+
 export type MbPhoneCountry = {
   iso2: string;
   dial: string;
@@ -14,20 +16,8 @@ export function mbFlagEmoji(iso2: string): string {
   return String.fromCodePoint(base + u.charCodeAt(0) - 65, base + u.charCodeAt(1) - 65);
 }
 
-/**
- * Default list: Central/East Africa focus + US for legacy mock data.
- * Order is display order in the picker (scrollable when more than ~4 rows visible).
- */
-export const MB_PHONE_COUNTRIES: MbPhoneCountry[] = [
-  { iso2: 'CD', dial: '+243', name: 'Congo (DRC)' },
-  { iso2: 'RW', dial: '+250', name: 'Rwanda' },
-  { iso2: 'UG', dial: '+256', name: 'Uganda' },
-  { iso2: 'KE', dial: '+254', name: 'Kenya' },
-  { iso2: 'TZ', dial: '+255', name: 'Tanzania' },
-  { iso2: 'BI', dial: '+257', name: 'Burundi' },
-  { iso2: 'ZA', dial: '+27', name: 'South Africa' },
-  { iso2: 'US', dial: '+1', name: 'United States' },
-];
+/** World list for the picker; shared calling codes (+1, +7, …) appear once per territory. */
+export const MB_PHONE_COUNTRIES: MbPhoneCountry[] = MB_PHONE_COUNTRIES_DATA.map((c) => ({ ...c }));
 
 /** Longest dial code first — used to parse stored values into country + national digits. */
 export const MB_PHONE_COUNTRIES_PARSE_ORDER: MbPhoneCountry[] = [...MB_PHONE_COUNTRIES].sort(

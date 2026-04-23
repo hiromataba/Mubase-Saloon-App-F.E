@@ -95,7 +95,7 @@ import {
           />
         </div>
         <div
-          class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1 [-webkit-overflow-scrolling:touch]"
+          class="max-h-40 overflow-y-auto overscroll-contain px-1 [-webkit-overflow-scrolling:touch]"
           role="listbox"
         >
           @for (c of filteredCountries(); track c.iso2) {
@@ -135,7 +135,8 @@ export class MbPhoneInputComponent implements ControlValueAccessor {
   readonly panelTop = signal(0);
   readonly panelLeft = signal(0);
   readonly panelWidth = signal(0);
-  readonly panelMaxHeight = signal(280);
+  /** Header + ~4 list rows + padding; keeps the panel compact. */
+  readonly panelMaxHeight = signal(220);
 
   readonly selectedIso = signal(MB_DEFAULT_PHONE_ISO2);
   readonly nationalDigits = signal('');
@@ -288,7 +289,7 @@ export class MbPhoneInputComponent implements ControlValueAccessor {
     const r = shell.getBoundingClientRect();
     const gap = 8;
     const margin = 10;
-    const preferredMax = 300;
+    const preferredMax = 220;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
@@ -305,26 +306,26 @@ export class MbPhoneInputComponent implements ControlValueAccessor {
 
     const spaceBelow = vh - r.bottom - gap - margin;
     const spaceAbove = r.top - gap - margin;
-    const openDown = spaceBelow >= 140 || spaceBelow >= spaceAbove;
+    const openDown = spaceBelow >= 100 || spaceBelow >= spaceAbove;
     let maxH = Math.min(preferredMax, openDown ? spaceBelow : spaceAbove);
     let top: number;
     if (openDown) {
       top = r.bottom + gap;
       if (top + maxH > vh - margin) {
-        maxH = Math.max(120, vh - margin - top);
+        maxH = Math.max(100, vh - margin - top);
       }
     } else {
       maxH = Math.min(maxH, spaceAbove);
       top = r.top - gap - maxH;
       if (top < margin) {
         top = margin;
-        maxH = Math.max(120, Math.min(maxH, r.top - gap - margin));
+        maxH = Math.max(100, Math.min(maxH, r.top - gap - margin));
       }
     }
 
     this.panelTop.set(top);
     this.panelLeft.set(left);
     this.panelWidth.set(width);
-    this.panelMaxHeight.set(Math.max(120, maxH));
+    this.panelMaxHeight.set(Math.max(100, Math.min(maxH, preferredMax)));
   }
 }
