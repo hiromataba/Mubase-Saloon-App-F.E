@@ -66,13 +66,13 @@ import {
     @if (pickerOpen()) {
       <button
         type="button"
-        class="fixed inset-0 z-[1040] cursor-default border-0 bg-transparent"
+        class="fixed inset-0 z-[90] cursor-default border-0 bg-transparent"
         aria-hidden="true"
         tabindex="-1"
         (click)="closeFromScrim()"
       ></button>
       <div
-        class="mb-select-panel fixed z-[1050] flex flex-col overflow-hidden rounded-2xl border border-mb-border bg-mb-surface py-1 shadow-mb-card dark:shadow-mb-card-dark"
+        class="mb-select-panel fixed z-[100] flex flex-col overflow-hidden rounded-2xl border border-mb-border bg-mb-surface py-1 shadow-mb-card dark:shadow-mb-card-dark"
         [style.top.px]="panelTop()"
         [style.left.px]="panelLeft()"
         [style.width.px]="panelWidth()"

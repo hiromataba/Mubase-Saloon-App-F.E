@@ -62,13 +62,13 @@ let mbSelectUid = 0;
       @if (open()) {
         <button
           type="button"
-          class="fixed inset-0 z-[1040] cursor-default border-0 bg-transparent"
+          class="fixed inset-0 z-[90] cursor-default border-0 bg-transparent"
           aria-hidden="true"
           tabindex="-1"
           (click)="close()"
         ></button>
         <div
-          class="mb-select-panel fixed z-[1050] flex flex-col overflow-hidden bg-mb-surface py-1.5"
+          class="mb-select-panel fixed z-[100] flex flex-col overflow-hidden bg-mb-surface py-1.5"
           [ngClass]="panelShellClass()"
           [style.top.px]="panelTop()"
           [style.left.px]="panelLeft()"
@@ -154,9 +154,9 @@ export class MbSelectComponent implements ControlValueAccessor {
     let attach = '';
     if (this.open() && this.panelOpenDownward()) {
       attach =
-        ' relative z-[1060] rounded-b-none border-mb-primary shadow-[0_0_0_1px_var(--mb-primary-glow)]';
+        ' relative z-[101] rounded-b-none border-mb-primary shadow-[0_0_0_1px_var(--mb-primary-glow)]';
     } else if (this.open() && !this.panelOpenDownward()) {
-      attach = ' relative z-[1060] border-mb-primary shadow-[0_0_0_1px_var(--mb-primary-glow)]';
+      attach = ' relative z-[101] border-mb-primary shadow-[0_0_0_1px_var(--mb-primary-glow)]';
     }
     return [base, extra, attach].filter(Boolean).join(' ');
   });
