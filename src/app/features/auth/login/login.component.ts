@@ -48,7 +48,7 @@ import { MbCardComponent } from '../../../shared/ui/mb-card.component';
           <mb-card [elevated]="true" title="Sign in" subtitle="Demo · any password (8+ chars)">
             <form class="space-y-4" [formGroup]="form" (ngSubmit)="submit()">
               <div>
-                <label class="text-sm font-medium text-mb-text-primary" for="email"
+                <label class="mt-[7px] text-sm font-medium text-mb-text-primary" for="email"
                   >Email</label
                 >
                 <input
@@ -60,7 +60,7 @@ import { MbCardComponent } from '../../../shared/ui/mb-card.component';
                 />
               </div>
               <div>
-                <label class="text-sm font-medium text-mb-text-primary" for="password"
+                <label class="mt-[7px] text-sm font-medium text-mb-text-primary" for="password"
                   >Password</label
                 >
                 <input

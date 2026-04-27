@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import type { Branch, BranchStaffRole } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
@@ -177,7 +178,7 @@ import { formatUsd } from '../../shared/formatters';
       (backdropClose)="closeEdit()"
       (closeClick)="closeEdit()"
     >
-      <form class="space-y-4" [formGroup]="branchForm" (ngSubmit)="saveBranch()">
+      <form class="space-y-6" [formGroup]="branchForm" (ngSubmit)="saveBranch()">
         <mb-field label="Name">
           <input class="mb-input" formControlName="name" />
         </mb-field>
@@ -193,6 +194,23 @@ import { formatUsd } from '../../shared/formatters';
         <mb-field label="Status">
           <mb-select formControlName="isActive" [options]="activeStatusOptions" placeholder="Status" />
         </mb-field>
+        @if (adding()) {
+          <label
+            class="flex cursor-pointer items-start gap-3 rounded-xl border border-slate-200/90 bg-slate-50/80 px-3 py-3 text-sm dark:border-slate-700 dark:bg-slate-900/40"
+          >
+            <input
+              type="checkbox"
+              formControlName="createStaffAccount"
+              class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-mb-primary focus:ring-mb-primary"
+            />
+            <span>
+              <span class="font-semibold text-slate-900 dark:text-slate-100">Create staff account</span>
+              <span class="mt-0.5 block text-xs font-normal text-slate-500 dark:text-slate-400">
+                Adds a branch manager login in mock data and assigns them to this location.
+              </span>
+            </span>
+          </label>
+        }
         <div class="flex flex-wrap gap-2 pt-2">
           <mb-btn type="submit" [disabled]="branchForm.invalid">Save</mb-btn>
           <mb-btn type="button" variant="secondary" (click)="closeEdit()">Cancel</mb-btn>
@@ -225,6 +243,7 @@ export class BranchesPageComponent {
   readonly auth = inject(AuthService);
   private readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
 
   /** Re-compute assignable users when role changes (same person can be manager + accountant). */
@@ -293,6 +312,7 @@ export class BranchesPageComponent {
     address: [''],
     phone: [''],
     isActive: this.fb.nonNullable.control<'true' | 'false'>('true'),
+    createStaffAccount: [false],
   });
 
   readonly assignForm = this.fb.nonNullable.group({
@@ -317,6 +337,14 @@ export class BranchesPageComponent {
   ]);
 
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((m) => {
+      if (m.get('add') !== '1') {
+        return;
+      }
+      this.openAdd();
+      void this.router.navigate([], { relativeTo: this.route, replaceUrl: true, queryParams: {} });
+    });
+
     this.assignForm.get('role')?.valueChanges.subscribe(() => this.assignRoleBump.update((n) => n + 1));
   }
 
@@ -369,6 +397,7 @@ export class BranchesPageComponent {
       address: '',
       phone: '',
       isActive: 'true',
+      createStaffAccount: false,
     });
     this.editOpen.set(true);
   }
@@ -382,6 +411,7 @@ export class BranchesPageComponent {
       address: b.address ?? '',
       phone: b.phone ?? '',
       isActive: b.isActive ? 'true' : 'false',
+      createStaffAccount: false,
     });
     this.editOpen.set(true);
   }
@@ -397,13 +427,28 @@ export class BranchesPageComponent {
     const v = this.branchForm.getRawValue();
     const active = v.isActive === 'true';
     if (this.adding()) {
-      this.db.createBranch({
+      const branch = this.db.createBranch({
         name: v.name,
         code: v.code,
         address: v.address || null,
         phone: v.phone || null,
         isActive: active,
       });
+      if (v.createStaffAccount) {
+        const slug = branch.id.replace(/^br-/, '');
+        const user = this.db.createUser({
+          email: `manager.${slug}@mubase.mock`,
+          fullName: `${v.name.trim()} — manager`,
+          phone: v.phone || null,
+          isOwner: false,
+          isActive: true,
+        });
+        try {
+          this.db.assignStaff({ userId: user.id, branchId: branch.id, role: 'MANAGER' });
+        } catch {
+          /* duplicate assignment — ignore in mock */
+        }
+      }
     } else {
       const id = this.editingId();
       if (id) {

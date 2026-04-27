@@ -81,11 +81,13 @@
 
   /** Extra breathing room below page header for first stats row on small screens (all roles). */
   .mb-page-stats-lead {
-    @apply max-sm:pt-7 sm:pt-0;
+    // @apply max-sm:pt-7 sm:pt-0;
   }
 
+  /* No backdrop-blur: it creates a stacking context so position:fixed dropdowns
+     (mb-select) paint underneath later siblings (e.g. stats cards). */
   .mb-toolbar {
-    @apply mb-2.5 flex flex-col gap-3 rounded-2xl border p-3 shadow-mb-card backdrop-blur-sm sm:flex-row sm:flex-wrap sm:items-center md:mb-3 lg:gap-4 lg:p-4 dark:shadow-mb-card-dark;
+    @apply mb-2.5 flex flex-col gap-3 rounded-2xl border p-3 shadow-mb-card sm:flex-row sm:flex-wrap sm:items-center md:mb-3 lg:gap-4 lg:p-4 dark:shadow-mb-card-dark;
     border-color: var(--mb-border);
     background-color: color-mix(in srgb, var(--mb-surface) 92%, transparent);
   }
@@ -132,7 +134,12 @@
   }
 
   .mb-input {
-    @apply w-full rounded-xl border px-4 py-3 text-base font-medium leading-snug shadow-sm transition-all duration-200 sm:py-3.5;
+    @apply w-full rounded-xl border px-4 text-base font-medium shadow-sm transition-all duration-200;
+    box-sizing: border-box;
+    height: 40px;
+    line-height: 40px;
+    padding-top: 0;
+    padding-bottom: 0;
     border-color: var(--mb-border);
     background-color: var(--mb-input-bg);
     color: var(--mb-text-primary);
@@ -156,9 +163,14 @@
     @apply cursor-not-allowed opacity-55;
   }
 
+  /** Select trigger is a button; flex centers label without fixed line-height. */
+  button.mb-input {
+    line-height: 1.25rem;
+  }
+
   /** Composite phone field — same chrome as `.mb-input` (border, radius, height, focus). */
   .mb-phone-input-shell {
-    @apply flex w-full items-stretch overflow-hidden rounded-xl border text-base font-medium leading-snug shadow-sm transition-all duration-200;
+    @apply flex h-10 min-h-[40px] w-full items-stretch overflow-hidden rounded-xl border text-base font-medium leading-snug shadow-sm transition-all duration-200;
     border-color: var(--mb-border);
     background-color: var(--mb-input-bg);
     color: var(--mb-text-primary);
@@ -182,11 +194,17 @@
   }
 
   textarea.mb-input {
-    @apply min-h-[7.5rem] resize-y;
+    height: auto;
+    min-height: 7.5rem;
+    line-height: 1.375;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    @apply resize-y;
   }
 
   select.mb-input {
-    @apply cursor-pointer appearance-none bg-clip-padding pr-11;
+    line-height: 1.25rem;
+    @apply cursor-pointer appearance-none bg-clip-padding pr-11 py-0;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 1rem center;

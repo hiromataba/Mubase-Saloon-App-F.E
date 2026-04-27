@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import type { BarberProfile, OwnerDashboardBarberRow } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
@@ -239,6 +240,7 @@ export class BarbersPageComponent {
   readonly auth = inject(AuthService);
   readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
 
   readonly formatUsd = formatUsd;
@@ -318,6 +320,14 @@ export class BarbersPageComponent {
   });
 
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((m) => {
+      if (m.get('add') !== '1' || !this.auth.canManageBarbers()) {
+        return;
+      }
+      this.openCreate();
+      void this.router.navigate([], { relativeTo: this.route, replaceUrl: true, queryParams: {} });
+    });
+
     effect(() => {
       this.filtered();
       this.pageSize();

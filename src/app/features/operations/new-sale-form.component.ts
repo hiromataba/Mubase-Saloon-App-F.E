@@ -53,20 +53,25 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
       >
         <p class="mb-section-label">Customer</p>
         <div class="mt-5 grid gap-5 sm:grid-cols-2">
-          <mb-field label="Existing customer" [optional]="true">
+          <mb-field
+            label="Existing customer"
+            hint="Pick someone already on file, or leave empty to create from the fields below"
+            [optional]="true"
+          >
             <mb-select
               formControlName="customerId"
               [options]="customerSelectOptions()"
-              placeholder="Walk-in / quick add"
+              placeholder="New customer — use name below"
             />
           </mb-field>
-          <mb-field label="Display name" hint="Shown on receipt" [required]="true">
+          <mb-field
+            label="Display name"
+            hint="On receipt; if nobody is selected above, we save this person for this branch"
+            [required]="true"
+          >
             <input formControlName="customerName" class="mb-input" />
           </mb-field>
-          <mb-field label="Phone" [optional]="true">
-            <mb-phone-input formControlName="customerPhone" />
-          </mb-field>
-          <mb-field label="WhatsApp" [optional]="true">
+          <mb-field label="WhatsApp number" hint="Optional — for receipts and follow-up" [optional]="true">
             <mb-phone-input formControlName="customerWhatsapp" />
           </mb-field>
         </div>
@@ -152,7 +157,7 @@ export class NewSaleFormComponent implements OnInit {
   ]);
 
   readonly customerSelectOptions = computed(() => [
-    { value: '', label: 'Walk-in / quick add' },
+    { value: '', label: 'Not on list — new or walk-in' },
     ...this.customersForBranch().map((c) => ({ value: c.id, label: c.fullName })),
   ]);
 
@@ -199,7 +204,6 @@ export class NewSaleFormComponent implements OnInit {
     totalAmount: [0, [Validators.required, Validators.min(0.01)]],
     customerId: [''],
     customerName: ['Walk-in', Validators.required],
-    customerPhone: [''],
     customerWhatsapp: [''],
     paymentMethod: this.fb.nonNullable.control<'CASH' | 'CARD' | 'TRANSFER' | 'OTHER'>('CASH'),
   });
@@ -240,8 +244,7 @@ export class NewSaleFormComponent implements OnInit {
       if (c) {
         this.form.patchValue({
           customerName: c.fullName,
-          customerPhone: c.phone ?? '',
-          customerWhatsapp: c.whatsapp ?? '',
+          customerWhatsapp: c.whatsapp ?? c.phone ?? '',
         });
       }
     });
@@ -262,14 +265,20 @@ export class NewSaleFormComponent implements OnInit {
     if (!barber || !u) {
       return;
     }
+    const waTrim = v.customerWhatsapp?.trim() || '';
+    const customerId = this.resolveCustomerIdForCheckout(
+      v.branchId,
+      v.customerId,
+      v.customerName,
+      waTrim,
+    );
     const row = this.db.recordTransaction({
       branchId: v.branchId,
       barberProfileId: v.barberProfileId,
       serviceId: v.serviceId || null,
-      customerId: v.customerId || null,
-      customerName: v.customerName,
-      customerPhone: v.customerPhone || undefined,
-      customerWhatsapp: v.customerWhatsapp || undefined,
+      customerId,
+      customerName: v.customerName.trim(),
+      customerWhatsapp: waTrim || undefined,
       serviceName: svc?.name ?? 'Custom service',
       totalAmount: v.totalAmount,
       commissionPercent: barber.commissionPercent,
@@ -278,6 +287,36 @@ export class NewSaleFormComponent implements OnInit {
     });
     this.saved.emit(row);
     this.resetForm();
+  }
+
+  /**
+   * - Customer chosen in the dropdown → use that id.
+   * - No selection + anonymous walk-in (default name, no WhatsApp) → no customer record.
+   * - No selection + any real details → create a customer for this branch, then link the sale.
+   */
+  private resolveCustomerIdForCheckout(
+    branchId: string,
+    selectedCustomerId: string,
+    displayName: string,
+    whatsappTrimmed: string,
+  ): string | null {
+    const picked = selectedCustomerId?.trim();
+    if (picked) {
+      return picked;
+    }
+    const name = displayName.trim();
+    const hasWhatsapp = whatsappTrimmed.replace(/\D/g, '').length > 0;
+    const anonymousWalkIn = name.toLowerCase() === 'walk-in' && !hasWhatsapp;
+    if (anonymousWalkIn || !name) {
+      return null;
+    }
+    const created = this.db.createCustomer({
+      branchId,
+      fullName: name,
+      phone: null,
+      whatsapp: hasWhatsapp ? whatsappTrimmed : null,
+    });
+    return created.id;
   }
 
   resetForm(): void {
@@ -290,7 +329,6 @@ export class NewSaleFormComponent implements OnInit {
       totalAmount: 0,
       customerId: '',
       customerName: 'Walk-in',
-      customerPhone: '',
       customerWhatsapp: '',
       paymentMethod: 'CASH',
     });

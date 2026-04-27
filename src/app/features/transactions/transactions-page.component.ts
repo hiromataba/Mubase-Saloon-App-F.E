@@ -47,7 +47,7 @@ import {
       <div class="mb-page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
         <div>
           <h1 class="mb-page-title">Transactions</h1>
-          <p class="mb-page-sub">Ledger · details and receipt preview</p>
+          <p class="mb-page-sub max-lg:hidden">Ledger · details and receipt preview</p>
         </div>
         <div class="mb-toolbar flex-1 lg:max-w-3xl lg:justify-end">
           <mb-select

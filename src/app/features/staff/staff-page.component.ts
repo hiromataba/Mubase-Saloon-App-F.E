@@ -1,5 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import type { BranchStaffRole } from '../../data/models/domain.types';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
@@ -166,6 +168,8 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
 export class StaffPageComponent {
   readonly db = inject(MockDatabaseService);
   private readonly fb = inject(FormBuilder);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   readonly pageIndex = signal(0);
   readonly pageSize = signal(5);
@@ -196,6 +200,14 @@ export class StaffPageComponent {
   });
 
   constructor() {
+    this.route.queryParamMap.pipe(takeUntilDestroyed()).subscribe((m) => {
+      if (m.get('add') !== '1') {
+        return;
+      }
+      this.openInvite();
+      void this.router.navigate([], { relativeTo: this.route, replaceUrl: true, queryParams: {} });
+    });
+
     effect(() => {
       this.rows();
       this.pageSize();

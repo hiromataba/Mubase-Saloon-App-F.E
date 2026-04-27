@@ -46,7 +46,9 @@ let mbSelectUid = 0;
       >
         <span class="min-w-0 flex-1 truncate font-medium">{{ displayLabel() }}</span>
         <svg
-          class="h-5 w-5 shrink-0 text-mb-text-secondary transition-transform duration-200"
+          class="h-5 w-5 shrink-0 transition-colors duration-200"
+          [class.text-mb-primary]="open()"
+          [class.text-mb-text-secondary]="!open()"
           [class.rotate-180]="open()"
           fill="none"
           stroke="currentColor"
@@ -60,13 +62,14 @@ let mbSelectUid = 0;
       @if (open()) {
         <button
           type="button"
-          class="fixed inset-0 z-[90] cursor-default border-0 bg-transparent"
+          class="fixed inset-0 z-[1040] cursor-default border-0 bg-transparent"
           aria-hidden="true"
           tabindex="-1"
           (click)="close()"
         ></button>
         <div
-          class="mb-select-panel fixed z-[100] flex flex-col overflow-hidden rounded-2xl border border-mb-border bg-mb-surface py-1 shadow-mb-card dark:shadow-mb-card-dark"
+          class="mb-select-panel fixed z-[1050] flex flex-col overflow-hidden bg-mb-surface py-1.5"
+          [ngClass]="panelShellClass()"
           [style.top.px]="panelTop()"
           [style.left.px]="panelLeft()"
           [style.width.px]="panelWidth()"
@@ -81,17 +84,15 @@ let mbSelectUid = 0;
               <button
                 type="button"
                 role="option"
-                class="flex w-full items-center px-3.5 py-2.5 text-left text-sm font-medium text-mb-text-primary transition-colors hover:bg-[var(--mb-hover-row)] active:bg-[var(--mb-primary-soft)]"
-                [ngClass]="{
-                  'bg-[var(--mb-primary-soft)] text-mb-primary': opt.value === valueSig(),
-                }"
+                class="flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium transition-colors"
+                [ngClass]="optionRowClass(opt.value)"
                 [attr.aria-selected]="opt.value === valueSig()"
                 (click)="choose(opt.value)"
               >
-                <span class="min-w-0 flex-1 break-words leading-snug">{{ opt.label }}</span>
+                <span class="min-w-0 flex-1 break-words leading-snug text-mb-text-primary">{{ opt.label }}</span>
                 @if (opt.value === valueSig()) {
                   <svg
-                    class="ml-2 h-4 w-4 shrink-0 text-mb-primary"
+                    class="h-4 w-4 shrink-0 text-mb-text-primary opacity-90 dark:text-white"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -127,6 +128,8 @@ export class MbSelectComponent implements ControlValueAccessor {
   readonly panelLeft = signal(0);
   readonly panelWidth = signal(0);
   readonly panelMaxHeight = signal(280);
+  /** When true, list is anchored flush under the trigger (single composite control). */
+  readonly panelOpenDownward = signal(true);
 
   private readonly uid = ++mbSelectUid;
   readonly triggerId = `mb-select-tr-${this.uid}`;
@@ -146,10 +149,44 @@ export class MbSelectComponent implements ControlValueAccessor {
 
   readonly triggerClasses = computed(() => {
     const base =
-      'mb-input flex w-full cursor-pointer items-center justify-between gap-2 text-left';
+      'mb-input flex w-full cursor-pointer items-center justify-between gap-2 text-left transition-[box-shadow,border-color,border-radius] duration-200';
     const extra = this.triggerClass().trim();
-    return extra ? `${base} ${extra}` : base;
+    let attach = '';
+    if (this.open() && this.panelOpenDownward()) {
+      attach =
+        ' relative z-[1060] rounded-b-none border-mb-primary shadow-[0_0_0_1px_var(--mb-primary-glow)]';
+    } else if (this.open() && !this.panelOpenDownward()) {
+      attach = ' relative z-[1060] border-mb-primary shadow-[0_0_0_1px_var(--mb-primary-glow)]';
+    }
+    return [base, extra, attach].filter(Boolean).join(' ');
   });
+
+  readonly panelShellClass = computed(() => {
+    if (this.panelOpenDownward()) {
+      return {
+        'rounded-b-2xl rounded-t-none': true,
+        'border border-mb-primary': true,
+        'border-t-0': true,
+        '-mt-px': true,
+        'shadow-xl shadow-slate-900/10 dark:shadow-black/55': true,
+      };
+    }
+    return {
+      'rounded-2xl': true,
+      'border border-mb-border': true,
+      'shadow-mb-card dark:shadow-mb-card-dark': true,
+    };
+  });
+
+  optionRowClass(value: string): Record<string, boolean> {
+    const sel = value === this.valueSig();
+    return {
+      'bg-[var(--mb-primary-soft)]': sel,
+      'text-mb-text-primary': true,
+      'hover:bg-[var(--mb-hover-row)]': !sel,
+      'active:bg-[var(--mb-primary-soft)]': !sel,
+    };
+  }
 
   constructor() {
     fromEvent(window, 'scroll', { capture: true })
@@ -236,7 +273,6 @@ export class MbSelectComponent implements ControlValueAccessor {
       return;
     }
     const r = btn.getBoundingClientRect();
-    const gap = 8;
     const margin = 10;
     const preferredMax = 320;
     const vw = window.innerWidth;
@@ -252,22 +288,25 @@ export class MbSelectComponent implements ControlValueAccessor {
       width = Math.min(width, vw - margin * 2);
     }
 
-    const spaceBelow = vh - r.bottom - gap - margin;
-    const spaceAbove = r.top - gap - margin;
-    let openDown = spaceBelow >= 140 || spaceBelow >= spaceAbove;
-    let maxH = Math.min(preferredMax, openDown ? spaceBelow : spaceAbove);
+    const gapDetached = 8;
+    const spaceBelow = vh - r.bottom - margin;
+    const spaceAbove = r.top - margin;
+    const openDown = spaceBelow >= 140 || spaceBelow >= spaceAbove;
+    this.panelOpenDownward.set(openDown);
+
+    let maxH = Math.min(preferredMax, openDown ? spaceBelow - gapDetached : spaceAbove - gapDetached);
     let top: number;
     if (openDown) {
-      top = r.bottom + gap;
+      top = Math.round(r.bottom);
       if (top + maxH > vh - margin) {
         maxH = Math.max(120, vh - margin - top);
       }
     } else {
-      maxH = Math.min(maxH, spaceAbove);
-      top = r.top - gap - maxH;
+      maxH = Math.min(maxH, spaceAbove - gapDetached);
+      top = r.top - gapDetached - maxH;
       if (top < margin) {
         top = margin;
-        maxH = Math.min(maxH, r.top - gap - margin);
+        maxH = Math.max(120, Math.min(maxH, r.top - gapDetached - margin));
       }
     }
 

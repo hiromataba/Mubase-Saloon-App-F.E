@@ -1,6 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, HostListener, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { WorkspaceBrandingService } from '../core/branding/workspace-branding.service';
 import { LocaleService } from '../core/locale/locale.service';
@@ -16,7 +16,7 @@ import { MbButtonComponent } from '../shared/ui/mb-button.component';
 import { filterNavForUser, type ShellNavItem } from './shell-nav';
 
 type QuickAction =
-  | { label: string; path: string }
+  | { label: string; path: string; queryParams?: Record<string, string> }
   | { label: string; action: 'sale' }
   | { label: string; action: 'whatsapp' };
 
@@ -276,7 +276,7 @@ type QuickAction =
                 <button
                   type="button"
                   class="shrink-0 rounded-xl bg-mb-primary px-3.5 py-2 text-xs font-semibold text-white shadow-sm active:scale-[0.98]"
-                  (click)="saleModal.openModal()"
+                  (click)="goSalesWithNewSaleModal()"
                 >
                   {{ q.label }}
                 </button>
@@ -287,9 +287,10 @@ type QuickAction =
                 >
                   {{ q.label }}
                 </a>
-              } @else {
+              } @else if (isPathQuickAction(q)) {
                 <a
                   [routerLink]="q.path"
+                  [queryParams]="q.queryParams ?? null"
                   class="shrink-0 rounded-xl border border-mb-border bg-mb-surface px-3.5 py-2 text-xs font-medium text-mb-text-primary shadow-sm"
                 >
                   {{ q.label }}
@@ -377,6 +378,7 @@ export class AppShellComponent {
   readonly saleModal = inject(NewSaleModalService);
   readonly branding = inject(WorkspaceBrandingService);
   private readonly db = inject(MockDatabaseService);
+  private readonly router = inject(Router);
   readonly mobileNav = signal(false);
   readonly accountMenuOpen = signal(false);
 
@@ -482,9 +484,9 @@ export class AppShellComponent {
     if (w === 'owner') {
       return [
         { label: 'New sale', action: 'sale' },
-        { label: 'Add branch', path: '/branches' },
-        { label: 'Add staff', path: '/staff' },
-        { label: 'Add barber', path: '/barbers' },
+        { label: 'Add branch', path: '/branches', queryParams: { add: '1' } },
+        { label: 'Add staff', path: '/staff', queryParams: { add: '1' } },
+        { label: 'Add barber', path: '/barbers', queryParams: { add: '1' } },
       ];
     }
     return [];
@@ -500,6 +502,15 @@ export class AppShellComponent {
 
   isWhatsappAction(q: QuickAction): q is { label: string; action: 'whatsapp' } {
     return 'action' in q && q.action === 'whatsapp';
+  }
+
+  isPathQuickAction(q: QuickAction): q is { label: string; path: string; queryParams?: Record<string, string> } {
+    return 'path' in q;
+  }
+
+  /** Mobile quick action: land on Sales, then open the new-sale modal (shell-hosted). */
+  goSalesWithNewSaleModal(): void {
+    void this.router.navigate(['/transactions']).then(() => this.saleModal.openModal());
   }
 
   toggleMobileNav(): void {

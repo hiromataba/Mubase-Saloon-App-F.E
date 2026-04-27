@@ -49,7 +49,7 @@ import { formatDateTime } from '../../shared/formatters';
             <input
               type="search"
               class="mb-input min-w-0 flex-1"
-              placeholder="Search name or phone…"
+              placeholder="Search name or WhatsApp…"
               [value]="query()"
               (input)="onQueryInput($event)"
             />
@@ -70,14 +70,13 @@ import { formatDateTime } from '../../shared/formatters';
         <mb-quick-stat-tile variant="sky" label="Branches" [value]="'' + customerStats().branchCount" />
       </mb-quick-stats-row>
 
-      <mb-card [title]="'Directory (' + filtered().length + ')'" subtitle="Phone · WhatsApp · last visit" [padding]="false">
+      <mb-card [title]="'Directory (' + filtered().length + ')'" subtitle="WhatsApp · last visit" [padding]="false">
         <div class="mb-table-wrap hidden lg:block">
           <table class="w-full min-w-[840px]">
             <thead>
               <tr class="mb-table-head">
                 <th>Customer</th>
                 <th>Branch</th>
-                <th>Phone</th>
                 <th>WhatsApp</th>
                 <th class="text-right">Visits</th>
                 <th>Last visit</th>
@@ -101,10 +100,7 @@ import { formatDateTime } from '../../shared/formatters';
                     <mb-badge tone="neutral" [caps]="false">{{ row.branch.name }}</mb-badge>
                   </td>
                   <td class="mb-table-cell text-slate-600 dark:text-slate-400">
-                    {{ row.customer.phone || '—' }}
-                  </td>
-                  <td class="mb-table-cell text-slate-600 dark:text-slate-400">
-                    {{ row.customer.whatsapp || '—' }}
+                    {{ row.customer.whatsapp || row.customer.phone || '—' }}
                   </td>
                   <td class="mb-table-cell text-right">
                     <mb-badge tone="info" [caps]="false">{{ row.visits }}</mb-badge>
@@ -134,10 +130,7 @@ import { formatDateTime } from '../../shared/formatters';
                 <mb-action-menu [items]="customerMenuItems" (picked)="onCustomerMenu(row, $event)" />
               </div>
               <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                {{ row.customer.phone || 'No phone' }}
-                @if (row.customer.whatsapp) {
-                  <span class="text-slate-400"> · WA {{ row.customer.whatsapp }}</span>
-                }
+                {{ row.customer.whatsapp || row.customer.phone || 'No WhatsApp' }}
               </p>
               <div class="mt-2 flex flex-wrap gap-2">
                 <mb-badge tone="info">{{ row.visits }} visits</mb-badge>
@@ -169,17 +162,14 @@ import { formatDateTime } from '../../shared/formatters';
       (backdropClose)="closeForm()"
       (closeClick)="closeForm()"
     >
-      <form class="space-y-4" [formGroup]="custForm" (ngSubmit)="saveCustomer()">
+      <form class="space-y-6" [formGroup]="custForm" (ngSubmit)="saveCustomer()">
         <mb-field label="Branch">
           <mb-select formControlName="branchId" [options]="customerBranchOptions()" placeholder="Branch" />
         </mb-field>
         <mb-field label="Full name">
           <input class="mb-input" formControlName="fullName" />
         </mb-field>
-        <mb-field label="Phone">
-          <mb-phone-input formControlName="phone" />
-        </mb-field>
-        <mb-field label="WhatsApp">
+        <mb-field label="WhatsApp number" hint="Optional" [optional]="true">
           <mb-phone-input formControlName="whatsapp" />
         </mb-field>
         <mb-field label="Notes">
@@ -207,12 +197,8 @@ import { formatDateTime } from '../../shared/formatters';
             <dd class="font-medium">{{ detailBranch()?.name }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Phone</dt>
-            <dd class="font-medium">{{ c.phone || '—' }}</dd>
-          </div>
-          <div>
             <dt class="text-slate-500">WhatsApp</dt>
-            <dd class="font-medium">{{ c.whatsapp || '—' }}</dd>
+            <dd class="font-medium">{{ c.whatsapp || c.phone || '—' }}</dd>
           </div>
           <div>
             <dt class="text-slate-500">Notes</dt>
@@ -295,7 +281,9 @@ export class CustomersPageComponent {
     const branches = new Set<string>();
     for (const r of rows) {
       visits += r.visits;
-      if (r.customer.whatsapp) {
+      const wa = (r.customer.whatsapp ?? '').replace(/\D/g, '').length > 0;
+      const legacyPhone = (r.customer.phone ?? '').replace(/\D/g, '').length > 0;
+      if (wa || legacyPhone) {
         withWa += 1;
       }
       branches.add(r.branch.id);
@@ -343,7 +331,6 @@ export class CustomersPageComponent {
   readonly custForm = this.fb.nonNullable.group({
     branchId: ['', Validators.required],
     fullName: ['', Validators.required],
-    phone: [''],
     whatsapp: [''],
     notes: [''],
   });
@@ -373,8 +360,7 @@ export class CustomersPageComponent {
       this.custForm.patchValue({
         branchId: row.customer.branchId,
         fullName: row.customer.fullName,
-        phone: row.customer.phone ?? '',
-        whatsapp: row.customer.whatsapp ?? '',
+        whatsapp: row.customer.whatsapp ?? row.customer.phone ?? '',
         notes: row.customer.notes ?? '',
       });
       this.formOpen.set(true);
@@ -391,7 +377,6 @@ export class CustomersPageComponent {
     this.custForm.reset({
       branchId: first,
       fullName: '',
-      phone: '',
       whatsapp: '',
       notes: '',
     });
@@ -407,20 +392,22 @@ export class CustomersPageComponent {
       return;
     }
     const v = this.custForm.getRawValue();
+    const wa = v.whatsapp?.trim() || '';
+    const hasWa = wa.replace(/\D/g, '').length > 0;
     if (this.editingId()) {
       this.db.updateCustomer(this.editingId()!, {
         branchId: v.branchId,
         fullName: v.fullName,
-        phone: v.phone || null,
-        whatsapp: v.whatsapp || null,
+        phone: null,
+        whatsapp: hasWa ? wa : null,
         notes: v.notes || null,
       });
     } else {
       this.db.createCustomer({
         branchId: v.branchId,
         fullName: v.fullName,
-        phone: v.phone || null,
-        whatsapp: v.whatsapp || null,
+        phone: null,
+        whatsapp: hasWa ? wa : null,
         notes: v.notes || null,
       });
     }

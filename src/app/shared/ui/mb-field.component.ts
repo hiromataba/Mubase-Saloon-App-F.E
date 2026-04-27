@@ -5,7 +5,7 @@ import { Component, input } from '@angular/core';
   standalone: true,
   template: `
     <div class="block w-full">
-      <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
+      <div class="mt-[7px] flex flex-wrap items-baseline gap-x-1.5 gap-y-0">
         <span class="text-[0.8125rem] font-semibold leading-snug tracking-tight text-mb-text-primary">
           {{ label() }}
         </span>

@@ -38,7 +38,7 @@ import {
     <div #shell class="mb-phone-input-shell" [class.is-disabled]="disabled()">
       <button
         type="button"
-        class="flex shrink-0 items-center gap-2 py-3 pl-4 pr-2 text-left outline-none transition hover:bg-[var(--mb-hover-row)] focus-visible:ring-2 focus-visible:ring-[var(--mb-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--mb-input-bg)] disabled:cursor-not-allowed sm:py-3.5"
+        class="flex h-full shrink-0 items-center gap-2 py-0 pl-4 pr-2 text-left outline-none transition hover:bg-[var(--mb-hover-row)] focus-visible:ring-2 focus-visible:ring-[var(--mb-ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--mb-input-bg)] disabled:cursor-not-allowed"
         [disabled]="disabled()"
         (click)="onCountryTriggerClick($event)"
         [attr.aria-expanded]="pickerOpen()"
@@ -59,20 +59,20 @@ import {
         [disabled]="disabled()"
         (input)="onNationalInput($event)"
         (blur)="markTouched()"
-        class="mb-phone-input-national min-w-0 flex-1 border-0 bg-transparent py-3 pl-3 pr-4 text-base font-medium leading-snug text-mb-text-primary outline-none placeholder:font-normal disabled:cursor-not-allowed sm:py-3.5"
+        class="mb-phone-input-national h-full min-h-0 min-w-0 flex-1 border-0 bg-transparent py-0 pl-3 pr-4 text-base font-medium leading-snug text-mb-text-primary outline-none placeholder:font-normal disabled:cursor-not-allowed"
       />
     </div>
 
     @if (pickerOpen()) {
       <button
         type="button"
-        class="fixed inset-0 z-[90] cursor-default border-0 bg-transparent"
+        class="fixed inset-0 z-[1040] cursor-default border-0 bg-transparent"
         aria-hidden="true"
         tabindex="-1"
         (click)="closeFromScrim()"
       ></button>
       <div
-        class="mb-select-panel fixed z-[100] flex flex-col overflow-hidden rounded-2xl border border-mb-border bg-mb-surface py-1 shadow-mb-card dark:shadow-mb-card-dark"
+        class="mb-select-panel fixed z-[1050] flex flex-col overflow-hidden rounded-2xl border border-mb-border bg-mb-surface py-1 shadow-mb-card dark:shadow-mb-card-dark"
         [style.top.px]="panelTop()"
         [style.left.px]="panelLeft()"
         [style.width.px]="panelWidth()"

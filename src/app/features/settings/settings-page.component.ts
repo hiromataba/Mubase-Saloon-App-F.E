@@ -79,7 +79,7 @@ import { MbCardComponent } from '../../shared/ui/mb-card.component';
             </div>
             <div class="min-w-0 flex-1 space-y-3">
               <div>
-                <label class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-mb-text-secondary">
+                <label class="mt-[7px] block text-[11px] font-semibold uppercase tracking-wide text-mb-text-secondary">
                   Business name
                 </label>
                 <input
@@ -98,7 +98,7 @@ import { MbCardComponent } from '../../shared/ui/mb-card.component';
         </mb-card>
       }
 
-      <mb-card title="Profile" subtitle="From mock session">
+      <mb-card extraClass="max-lg:mt-8" title="Profile" subtitle="From mock session">
         <div class="mb-6 flex items-center gap-4 border-b border-mb-border pb-6">
           @if (auth.currentUser(); as u) {
             <mb-avatar [label]="u.fullName" [photoUrl]="u.photoUrl" size="lg" />

@@ -30,6 +30,8 @@ export class MbCardComponent {
   readonly subtitle = input<string>('');
   readonly padding = input(true);
   readonly elevated = input(true);
+  /** Extra classes on the outer card (e.g. responsive spacing). */
+  readonly extraClass = input<string>('');
 
   cardClass(): string {
     const base =
@@ -37,6 +39,7 @@ export class MbCardComponent {
     const shadow = this.elevated()
       ? 'shadow-mb-card transition-shadow duration-300 hover:shadow-mb-card-hover dark:shadow-mb-card-dark dark:hover:shadow-mb-card-hover-dark'
       : '';
-    return `${base} ${shadow}`;
+    const extra = this.extraClass().trim();
+    return [base, shadow, extra].filter(Boolean).join(' ');
   }
 }
