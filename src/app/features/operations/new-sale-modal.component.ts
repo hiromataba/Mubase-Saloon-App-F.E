@@ -1,6 +1,7 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import type { TransactionListItem } from '../../data/models/domain.types';
-import { formatDateTime, formatPct, formatUsd } from '../../shared/formatters';
+import { CurrencyService } from '../../core/currency/currency.service';
+import { formatDateTime, formatPct } from '../../shared/formatters';
 import { buildReceiptThankYouMessage, openWhatsAppPrefilled } from '../../shared/whatsapp.util';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
 import { MbButtonComponent } from '../../shared/ui/mb-button.component';
@@ -28,16 +29,16 @@ import { NewSaleModalService } from './new-sale-modal.service';
           >
             <p class="text-sm font-semibold text-mb-primary">Payment recorded</p>
             <p class="mt-1 text-sm font-normal text-mb-text-primary">
-              {{ sale.customerNameSnapshot }} · {{ formatUsd(sale.totalAmount) }}
+              {{ sale.customerNameSnapshot }} · {{ currency.format(sale.totalAmount) }}
             </p>
             <dl class="mt-4 grid gap-3 border-t border-mb-border pt-4 text-sm sm:grid-cols-3">
               <div>
                 <dt class="text-xs text-mb-text-secondary">Barber payout</dt>
-                <dd class="mt-0.5 font-semibold tabular-nums text-mb-primary">{{ formatUsd(sale.barberEarning) }}</dd>
+                <dd class="mt-0.5 font-semibold tabular-nums text-mb-primary">{{ currency.format(sale.barberEarning) }}</dd>
               </div>
               <div>
                 <dt class="text-xs text-mb-text-secondary">Shop share</dt>
-                <dd class="mt-0.5 font-semibold tabular-nums text-mb-text-primary">{{ formatUsd(sale.shopEarning) }}</dd>
+                <dd class="mt-0.5 font-semibold tabular-nums text-mb-text-primary">{{ currency.format(sale.shopEarning) }}</dd>
               </div>
               <div>
                 <dt class="text-xs text-mb-text-secondary">Commission</dt>
@@ -93,7 +94,7 @@ import { NewSaleModalService } from './new-sale-modal.service';
 })
 export class NewSaleModalComponent {
   readonly saleModal = inject(NewSaleModalService);
-  readonly formatUsd = formatUsd;
+  readonly currency = inject(CurrencyService);
   readonly formatDateTime = formatDateTime;
   readonly formatPct = formatPct;
 

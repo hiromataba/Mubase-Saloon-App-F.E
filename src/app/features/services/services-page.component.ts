@@ -1,4 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, DestroyRef, effect, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Service } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
@@ -13,7 +14,7 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
 import { MbModalComponent } from '../../shared/ui/mb-modal.component';
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
-import { formatUsd } from '../../shared/formatters';
+import { CurrencyService, type DisplayCurrencyCode } from '../../core/currency/currency.service';
 
 @Component({
   standalone: true,
@@ -41,7 +42,7 @@ import { formatUsd } from '../../shared/formatters';
       <mb-quick-stats-row lead>
         <mb-quick-stat-tile variant="violet" label="Services" [value]="'' + catalogStats().items" />
         <mb-quick-stat-tile variant="emerald" label="Active" [value]="'' + catalogStats().active" />
-        <mb-quick-stat-tile variant="amber" label="Avg price" [value]="formatUsd(catalogStats().avgPrice)" />
+        <mb-quick-stat-tile variant="amber" label="Avg price" [value]="currency.format(catalogStats().avgPrice)" />
         <mb-quick-stat-tile variant="sky" label="Branches" [value]="'' + catalogStats().branches" />
       </mb-quick-stats-row>
 
@@ -76,9 +77,14 @@ import { formatUsd } from '../../shared/formatters';
                   @if (svc.description) {
                     <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">{{ svc.description }}</p>
                   }
-                  <p class="mt-3 text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {{ formatUsd(svc.basePrice) }}
-                  </p>
+                  <div class="mt-3 flex flex-wrap items-center gap-2">
+                    <mb-badge tone="neutral" [caps]="false" class="!text-[10px]">{{
+                      svc.priceCurrency === 'CDF' ? 'FC' : 'USD'
+                    }}</mb-badge>
+                    <p class="text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                      {{ currency.format(svc.basePrice, svc.priceCurrency) }}
+                    </p>
+                  </div>
                   <p class="mt-1 text-xs text-slate-500">{{ svc.durationMin ? svc.durationMin + ' min' : '—' }}</p>
                 </div>
               }
@@ -102,9 +108,22 @@ import { formatUsd } from '../../shared/formatters';
         <mb-field label="Description">
           <input class="mb-input" formControlName="description" />
         </mb-field>
+        <mb-field label="List price currency" [required]="true">
+          <mb-select
+            formControlName="priceCurrency"
+            [options]="priceCurrencyOptions"
+            placeholder="Currency"
+          />
+        </mb-field>
         <div class="grid gap-4 sm:grid-cols-2">
-          <mb-field label="Price (USD)">
-            <input type="number" step="0.01" min="0" class="mb-input tabular-nums" formControlName="basePrice" />
+          <mb-field [label]="'Price (' + currency.amountLabelFor(svcCatalogMode()) + ')'">
+            <input
+              type="number"
+              [attr.step]="currency.amountStepFor(svcCatalogMode())"
+              min="0"
+              class="mb-input tabular-nums"
+              formControlName="basePrice"
+            />
           </mb-field>
           <mb-field label="Duration (min)">
             <input type="number" min="0" class="mb-input tabular-nums" formControlName="durationMin" />
@@ -135,10 +154,9 @@ import { formatUsd } from '../../shared/formatters';
 })
 export class ServicesPageComponent {
   readonly auth = inject(AuthService);
+  readonly currency = inject(CurrencyService);
   private readonly db = inject(MockDatabaseService);
   private readonly fb = inject(FormBuilder);
-
-  readonly formatUsd = formatUsd;
 
   readonly canManage = computed(() => this.auth.canManageBusiness());
 
@@ -179,30 +197,84 @@ export class ServicesPageComponent {
     { value: 'false', label: 'Inactive' },
   ];
 
+  readonly priceCurrencyOptions: MbSelectOption[] = [
+    { value: 'USD', label: 'USD ($)' },
+    { value: 'CDF', label: 'CDF (FC)' },
+  ];
+
   readonly formOpen = signal(false);
   readonly branchTarget = signal<string | null>(null);
   readonly editingId = signal<string | null>(null);
   readonly confirmOff = signal(false);
   readonly offServiceId = signal<string | null>(null);
 
+  readonly svcFormTick = signal(0);
+
   readonly svcForm = this.fb.group({
     name: this.fb.nonNullable.control('', Validators.required),
     description: this.fb.nonNullable.control(''),
-    basePrice: this.fb.nonNullable.control(35, [Validators.required, Validators.min(0.01)]),
+    priceCurrency: this.fb.nonNullable.control<'USD' | 'CDF'>('USD'),
+    basePrice: this.fb.nonNullable.control(35, [Validators.required]),
     durationMin: this.fb.control<number | null>(30),
     isActive: this.fb.nonNullable.control<'true' | 'false'>('true'),
   });
 
+  readonly svcCatalogMode = computed((): DisplayCurrencyCode => {
+    this.svcFormTick();
+    const pc = this.svcForm.getRawValue().priceCurrency;
+    return pc === 'CDF' ? 'CDF' : 'USD';
+  });
+
+  private readonly destroyRef = inject(DestroyRef);
+
+  private lastSvcCatalogMode: DisplayCurrencyCode | null = null;
+
+  constructor() {
+    this.svcForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => this.svcFormTick.update((n) => n + 1));
+
+    effect(() => {
+      const mode = this.svcCatalogMode();
+      if (!this.formOpen()) {
+        this.lastSvcCatalogMode = null;
+        return;
+      }
+      const ctl = this.svcForm.get('basePrice');
+      if (!ctl) {
+        return;
+      }
+      if (this.lastSvcCatalogMode === null) {
+        this.lastSvcCatalogMode = mode;
+        return;
+      }
+      if (this.lastSvcCatalogMode === mode) {
+        return;
+      }
+      const prev = this.lastSvcCatalogMode;
+      this.lastSvcCatalogMode = mode;
+      const v = Number(ctl.value) || 0;
+      const usd = this.currency.usdFromDisplayAmount(v, prev);
+      const next = this.currency.displayAmountFromUsd(usd, mode);
+      ctl.setValue(next, { emitEvent: false });
+    });
+  }
+
   openAdd(branchId: string): void {
     this.branchTarget.set(branchId);
     this.editingId.set(null);
+    this.lastSvcCatalogMode = null;
     this.svcForm.reset({
       name: '',
       description: '',
-      basePrice: 35,
+      priceCurrency: 'USD',
+      basePrice: this.currency.displayAmountFromUsd(35, 'USD'),
       durationMin: 30,
       isActive: 'true',
     });
+    this.svcForm.get('basePrice')?.setValidators([
+      Validators.required,
+      this.currency.minUsdAmountValidator(() => this.svcCatalogMode()),
+    ]);
+    this.svcForm.get('basePrice')?.updateValueAndValidity({ emitEvent: false });
     this.formOpen.set(true);
   }
 
@@ -210,13 +282,21 @@ export class ServicesPageComponent {
     if (id === 'edit') {
       this.branchTarget.set(svc.branchId);
       this.editingId.set(svc.id);
+      const pc = svc.priceCurrency ?? 'USD';
+      this.lastSvcCatalogMode = null;
       this.svcForm.patchValue({
         name: svc.name,
         description: svc.description ?? '',
-        basePrice: svc.basePrice,
+        priceCurrency: pc,
+        basePrice: this.currency.displayAmountFromUsd(svc.basePrice, pc),
         durationMin: svc.durationMin ?? null,
         isActive: svc.isActive ? 'true' : 'false',
       });
+      this.svcForm.get('basePrice')?.setValidators([
+        Validators.required,
+        this.currency.minUsdAmountValidator(() => this.svcCatalogMode()),
+      ]);
+      this.svcForm.get('basePrice')?.updateValueAndValidity({ emitEvent: false });
       this.formOpen.set(true);
     }
     if (id === 'off') {
@@ -236,6 +316,7 @@ export class ServicesPageComponent {
     const v = this.svcForm.getRawValue() as {
       name: string;
       description: string;
+      priceCurrency: 'USD' | 'CDF';
       basePrice: number;
       durationMin: number | null;
       isActive: 'true' | 'false';
@@ -244,11 +325,14 @@ export class ServicesPageComponent {
     if (!branchId) {
       return;
     }
+    const mode = v.priceCurrency === 'CDF' ? 'CDF' : 'USD';
+    const basePriceUsd = this.currency.usdFromDisplayAmount(v.basePrice, mode);
     if (this.editingId()) {
       this.db.updateService(this.editingId()!, {
         name: v.name,
         description: v.description || null,
-        basePrice: v.basePrice,
+        priceCurrency: mode,
+        basePrice: basePriceUsd,
         durationMin: v.durationMin ?? null,
         isActive: v.isActive === 'true',
       });
@@ -257,7 +341,8 @@ export class ServicesPageComponent {
         branchId,
         name: v.name,
         description: v.description || null,
-        basePrice: v.basePrice,
+        priceCurrency: mode,
+        basePrice: basePriceUsd,
         durationMin: v.durationMin ?? null,
         isActive: true,
       });

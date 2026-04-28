@@ -3,6 +3,7 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { WorkspaceBrandingService } from '../core/branding/workspace-branding.service';
+import { CurrencyService } from '../core/currency/currency.service';
 import { LocaleService } from '../core/locale/locale.service';
 import { LayoutService } from '../core/layout/layout.service';
 import { ThemeService } from '../core/theme/theme.service';
@@ -210,6 +211,34 @@ type QuickAction =
                 FR
               </button>
             </div>
+            <div
+              class="flex shrink-0 items-center rounded-xl border border-mb-border bg-mb-bg p-0.5 shadow-sm dark:bg-mb-elevated"
+              role="group"
+              aria-label="Currency"
+            >
+              <button
+                type="button"
+                class="rounded-lg px-2 py-1.5 text-[10px] font-semibold transition sm:px-2.5 sm:text-xs"
+                [class.bg-mb-surface]="currency.displayCurrency() === 'USD'"
+                [class.text-mb-text-primary]="currency.displayCurrency() === 'USD'"
+                [class.shadow-sm]="currency.displayCurrency() === 'USD'"
+                [class.text-mb-text-secondary]="currency.displayCurrency() !== 'USD'"
+                (click)="currency.setDisplayCurrency('USD')"
+              >
+                USD
+              </button>
+              <button
+                type="button"
+                class="rounded-lg px-2 py-1.5 text-[10px] font-semibold transition sm:px-2.5 sm:text-xs"
+                [class.bg-mb-surface]="currency.displayCurrency() === 'CDF'"
+                [class.text-mb-text-primary]="currency.displayCurrency() === 'CDF'"
+                [class.shadow-sm]="currency.displayCurrency() === 'CDF'"
+                [class.text-mb-text-secondary]="currency.displayCurrency() !== 'CDF'"
+                (click)="currency.setDisplayCurrency('CDF')"
+              >
+                CDF
+              </button>
+            </div>
             @if (auth.canOperateFrontDesk()) {
               <mb-btn size="sm" class="hidden sm:inline-flex" (click)="saleModal.openModal()">New sale</mb-btn>
             }
@@ -372,6 +401,7 @@ type QuickAction =
 })
 export class AppShellComponent {
   readonly auth = inject(AuthService);
+  readonly currency = inject(CurrencyService);
   readonly locale = inject(LocaleService);
   readonly theme = inject(ThemeService);
   readonly layout = inject(LayoutService);

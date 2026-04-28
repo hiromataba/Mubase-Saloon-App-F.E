@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { CurrencyService } from '../../core/currency/currency.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbLineChartComponent } from '../../shared/charts/mb-line-chart.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -12,7 +13,7 @@ import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.com
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
 import { MbAvatarComponent } from '../../shared/ui/mb-avatar.component';
-import { formatDateTime, formatUsd } from '../../shared/formatters';
+import { formatDateTime } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -50,13 +51,13 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
           <mb-stat-card
             icon="revenue"
             label="Your earnings"
-            [value]="formatUsd(dash().summary.yourEarnings)"
+            [value]="currency.format(dash().summary.yourEarnings)"
             [trend]="barberCutTrend()"
           />
           <mb-stat-card
             icon="wallet"
             label="Gross services"
-            [value]="formatUsd(dash().summary.grossServiceTotal)"
+            [value]="currency.format(dash().summary.grossServiceTotal)"
           />
           <mb-stat-card
             icon="activity"
@@ -75,24 +76,24 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
             variant="violet"
             label="Your sales today"
             [value]="'' + txStats().todayCount"
-            [hint]="formatUsd(txStats().todayRevenue) + ' gross'"
+            [hint]="currency.format(txStats().todayRevenue) + ' gross'"
           />
           <mb-quick-stat-tile
             variant="emerald"
             label="This week"
             [value]="'' + txStats().weekCount"
-            [hint]="formatUsd(txStats().weekRevenue)"
+            [hint]="currency.format(txStats().weekRevenue)"
           />
           <mb-quick-stat-tile
             variant="amber"
             label="This month"
             [value]="'' + txStats().monthCount"
-            [hint]="formatUsd(txStats().monthRevenue)"
+            [hint]="currency.format(txStats().monthRevenue)"
           />
           <mb-quick-stat-tile
             variant="sky"
             label="Your cut (month)"
-            [value]="formatUsd(monthBarberCut())"
+            [value]="currency.format(monthBarberCut())"
           />
         </mb-quick-stats-row>
 
@@ -134,7 +135,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                       </td>
                       <td class="mb-table-cell text-slate-600 dark:text-slate-400">{{ t.serviceNameSnapshot }}</td>
                       <td class="mb-table-cell text-right text-base font-semibold tabular-nums text-slate-900 dark:text-white">
-                        {{ formatUsd(t.barberEarning) }}
+                        {{ currency.format(t.barberEarning) }}
                       </td>
                     </tr>
                   }
@@ -152,7 +153,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                       <p class="truncate text-xs text-slate-500">{{ t.serviceNameSnapshot }}</p>
                     </div>
                     <p class="shrink-0 text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                      {{ formatUsd(t.barberEarning) }}
+                      {{ currency.format(t.barberEarning) }}
                     </p>
                   </div>
                   <p class="mt-2 text-xs text-slate-500">{{ formatDateTime(t.paymentDate) }} · {{ t.branch.code }}</p>
@@ -174,10 +175,10 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
 })
 export class MyDeskPageComponent {
   readonly auth = inject(AuthService);
+  readonly currency = inject(CurrencyService);
   readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
 
-  readonly formatUsd = formatUsd;
   readonly formatDateTime = formatDateTime;
 
   readonly pageIndex = signal(0);

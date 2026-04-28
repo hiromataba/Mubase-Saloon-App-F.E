@@ -1,10 +1,12 @@
-import { Component, computed, inject, OnInit, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, OnInit, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/auth/auth.service';
+import type { DisplayCurrencyCode } from '../../core/currency/currency.service';
+import { CurrencyService } from '../../core/currency/currency.service';
 import type { TransactionListItem } from '../../data/models/domain.types';
 import { splitEarnings } from '../../data/mock/earnings.util';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
-import { formatPct, formatUsd } from '../../shared/formatters';
+import { formatPct } from '../../shared/formatters';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
 import { MbButtonComponent } from '../../shared/ui/mb-button.component';
 import { MbFieldComponent } from '../../shared/ui/mb-field.component';
@@ -27,7 +29,49 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
       <div
         class="rounded-2xl border border-mb-border bg-mb-elevated/20 p-5 shadow-mb-card sm:p-6 dark:bg-mb-elevated/25 dark:shadow-mb-card-dark"
       >
-        <p class="mb-section-label">Sale</p>
+        <div class="flex flex-wrap items-start justify-between gap-3 gap-y-2">
+          <p class="mb-section-label">Sale</p>
+          @if (saleAmountLockedByService()) {
+            <mb-badge tone="info" [caps]="false">Amount follows catalog ({{ currency.amountLabelFor(saleAmountCurrency()) }})</mb-badge>
+          } @else {
+            <div
+              class="flex shrink-0 items-center rounded-xl border border-mb-border bg-mb-bg p-0.5 shadow-sm dark:bg-mb-elevated"
+              role="group"
+              aria-label="Amount currency"
+            >
+              <button
+                type="button"
+                class="rounded-lg px-2.5 py-1 text-[11px] font-semibold transition sm:px-3 sm:text-xs"
+                [class.bg-mb-surface]="currency.displayCurrency() === 'USD'"
+                [class.text-mb-text-primary]="currency.displayCurrency() === 'USD'"
+                [class.shadow-sm]="currency.displayCurrency() === 'USD'"
+                [class.text-mb-text-secondary]="currency.displayCurrency() !== 'USD'"
+                (click)="currency.setDisplayCurrency('USD')"
+              >
+                USD
+              </button>
+              <button
+                type="button"
+                class="rounded-lg px-2.5 py-1 text-[11px] font-semibold transition sm:px-3 sm:text-xs"
+                [class.bg-mb-surface]="currency.displayCurrency() === 'CDF'"
+                [class.text-mb-text-primary]="currency.displayCurrency() === 'CDF'"
+                [class.shadow-sm]="currency.displayCurrency() === 'CDF'"
+                [class.text-mb-text-secondary]="currency.displayCurrency() !== 'CDF'"
+                title="Franc congolais (FC)"
+                (click)="currency.setDisplayCurrency('CDF')"
+              >
+                CDF (FC)
+              </button>
+            </div>
+          }
+        </div>
+        <p class="mt-2 text-xs text-mb-text-secondary">
+          @if (saleAmountLockedByService()) {
+            This service was priced in {{ currency.amountLabelFor(saleAmountCurrency()) }} in the catalog.
+          } @else {
+            Custom sale: choose USD or CDF (FC); the ledger stores USD.
+          }
+        </p>
         <div class="mt-5 grid gap-5 sm:grid-cols-2">
           <mb-field label="Branch" [required]="true">
             <mb-select formControlName="branchId" [options]="branchSelectOptions()" placeholder="Choose branch" />
@@ -42,8 +86,14 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
           <mb-field label="Service" hint="Price loads from catalog — editable" [optional]="true">
             <mb-select formControlName="serviceId" [options]="serviceSelectOptions()" placeholder="Custom / walk-in" />
           </mb-field>
-          <mb-field label="Amount (USD)" [required]="true">
-            <input type="number" step="0.01" min="0" formControlName="totalAmount" class="mb-input tabular-nums" />
+          <mb-field [label]="'Amount (' + currency.amountLabelFor(saleAmountCurrency()) + ')'" [required]="true">
+            <input
+              type="number"
+              [attr.step]="currency.amountStepFor(saleAmountCurrency())"
+              [attr.min]="0"
+              formControlName="totalAmount"
+              class="mb-input tabular-nums"
+            />
           </mb-field>
         </div>
       </div>
@@ -94,13 +144,13 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
           <div class="rounded-xl border border-mb-border bg-mb-surface px-4 py-3.5 shadow-sm dark:bg-mb-bg">
             <dt class="text-xs font-medium text-mb-text-secondary">Barber earns</dt>
             <dd class="mt-1 font-display text-lg font-semibold tabular-nums text-mb-primary">
-              {{ formatUsd(preview().barber) }}
+              {{ currency.format(preview().barber, saleAmountCurrency()) }}
             </dd>
           </div>
           <div class="rounded-xl border border-mb-border bg-mb-surface px-4 py-3.5 shadow-sm dark:bg-mb-bg">
             <dt class="text-xs font-medium text-mb-text-secondary">Shop earns</dt>
             <dd class="mt-1 font-display text-lg font-semibold tabular-nums text-mb-text-primary">
-              {{ formatUsd(preview().shop) }}
+              {{ currency.format(preview().shop, saleAmountCurrency()) }}
             </dd>
           </div>
         </dl>
@@ -125,11 +175,11 @@ import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-selec
 export class NewSaleFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   readonly auth = inject(AuthService);
+  readonly currency = inject(CurrencyService);
   private readonly db = inject(MockDatabaseService);
 
   readonly saved = output<TransactionListItem>();
 
-  readonly formatUsd = formatUsd;
   readonly formatPct = formatPct;
 
   readonly branches = computed(() => {
@@ -152,7 +202,7 @@ export class NewSaleFormComponent implements OnInit {
     { value: '', label: 'Custom / walk-in' },
     ...this.servicesForBranch().map((s) => ({
       value: s.id,
-      label: `${s.name} — ${this.formatUsd(s.basePrice)}`,
+      label: `${s.name} — ${this.currency.format(s.basePrice, s.priceCurrency ?? 'USD')}`,
     })),
   ]);
 
@@ -190,10 +240,11 @@ export class NewSaleFormComponent implements OnInit {
   readonly preview = computed(() => {
     this.previewTick();
     const v = this.form.getRawValue();
-    const total = Number(v.totalAmount) || 0;
+    const mode = this.saleAmountCurrency();
+    const totalUsd = this.currency.usdFromDisplayAmount(Number(v.totalAmount) || 0, mode);
     const barber = v.barberProfileId ? this.db.getBarber(v.barberProfileId) : undefined;
     const pct = barber?.commissionPercent ?? 0;
-    const { barberEarning, shopEarning } = splitEarnings(total, pct);
+    const { barberEarning, shopEarning } = splitEarnings(totalUsd, pct);
     return { pct, barber: barberEarning, shop: shopEarning };
   });
 
@@ -201,15 +252,62 @@ export class NewSaleFormComponent implements OnInit {
     branchId: ['', Validators.required],
     barberProfileId: ['', Validators.required],
     serviceId: [''],
-    totalAmount: [0, [Validators.required, Validators.min(0.01)]],
+    totalAmount: [0, [Validators.required]],
     customerId: [''],
     customerName: ['Walk-in', Validators.required],
     customerWhatsapp: [''],
     paymentMethod: this.fb.nonNullable.control<'CASH' | 'CARD' | 'TRANSFER' | 'OTHER'>('CASH'),
   });
 
+  readonly saleAmountCurrency = computed((): DisplayCurrencyCode => {
+    this.previewTick();
+    const sid = this.form.getRawValue().serviceId?.trim() ?? '';
+    if (sid) {
+      const pc = this.db.getService(sid)?.priceCurrency;
+      return pc === 'CDF' ? 'CDF' : 'USD';
+    }
+    return this.currency.displayCurrency();
+  });
+
+  readonly saleAmountLockedByService = computed(() => {
+    this.previewTick();
+    return !!this.form.getRawValue().serviceId?.trim();
+  });
+
+  private lastSaleAmountMode: DisplayCurrencyCode | null = null;
+
+  constructor() {
+    effect(() => {
+      const mode = this.saleAmountCurrency();
+      const ctl = this.form.get('totalAmount');
+      if (!ctl) {
+        return;
+      }
+      if (this.lastSaleAmountMode === null) {
+        this.lastSaleAmountMode = mode;
+        return;
+      }
+      if (this.lastSaleAmountMode === mode) {
+        return;
+      }
+      const prev = this.lastSaleAmountMode;
+      this.lastSaleAmountMode = mode;
+      const v = Number(ctl.value) || 0;
+      const usd = this.currency.usdFromDisplayAmount(v, prev);
+      const next = this.currency.displayAmountFromUsd(usd, mode);
+      ctl.setValue(next, { emitEvent: false });
+      this.previewTick.update((n) => n + 1);
+    });
+  }
+
   ngOnInit(): void {
     this.form.valueChanges.subscribe(() => this.previewTick.update((n) => n + 1));
+
+    this.form.get('totalAmount')?.setValidators([
+      Validators.required,
+      this.currency.minUsdAmountValidator(() => this.saleAmountCurrency()),
+    ]);
+    this.form.get('totalAmount')?.updateValueAndValidity({ emitEvent: false });
 
     const first = this.branches()[0]?.id ?? '';
     this.form.patchValue({ branchId: first });
@@ -231,7 +329,10 @@ export class NewSaleFormComponent implements OnInit {
       }
       const svc = this.db.getService(sid);
       if (svc) {
-        this.form.patchValue({ totalAmount: svc.basePrice });
+        const pc = svc.priceCurrency ?? 'USD';
+        this.form.patchValue({
+          totalAmount: this.currency.displayAmountFromUsd(svc.basePrice, pc),
+        });
       }
     });
 
@@ -272,6 +373,7 @@ export class NewSaleFormComponent implements OnInit {
       v.customerName,
       waTrim,
     );
+    const mode = this.saleAmountCurrency();
     const row = this.db.recordTransaction({
       branchId: v.branchId,
       barberProfileId: v.barberProfileId,
@@ -280,7 +382,7 @@ export class NewSaleFormComponent implements OnInit {
       customerName: v.customerName.trim(),
       customerWhatsapp: waTrim || undefined,
       serviceName: svc?.name ?? 'Custom service',
-      totalAmount: v.totalAmount,
+      totalAmount: this.currency.usdFromDisplayAmount(Number(v.totalAmount) || 0, mode),
       commissionPercent: barber.commissionPercent,
       paymentMethod: v.paymentMethod,
       recordedByUserId: u.id,
@@ -289,11 +391,6 @@ export class NewSaleFormComponent implements OnInit {
     this.resetForm();
   }
 
-  /**
-   * - Customer chosen in the dropdown → use that id.
-   * - No selection + anonymous walk-in (default name, no WhatsApp) → no customer record.
-   * - No selection + any real details → create a customer for this branch, then link the sale.
-   */
   private resolveCustomerIdForCheckout(
     branchId: string,
     selectedCustomerId: string,
@@ -322,6 +419,7 @@ export class NewSaleFormComponent implements OnInit {
   resetForm(): void {
     const branchId = this.form.get('branchId')?.value ?? this.branches()[0]?.id ?? '';
     const barbers = this.db.listBarbersForBranch(branchId);
+    this.lastSaleAmountMode = null;
     this.form.reset({
       branchId,
       barberProfileId: barbers[0]?.id ?? '',
@@ -332,5 +430,6 @@ export class NewSaleFormComponent implements OnInit {
       customerWhatsapp: '',
       paymentMethod: 'CASH',
     });
+    this.previewTick.update((n) => n + 1);
   }
 }

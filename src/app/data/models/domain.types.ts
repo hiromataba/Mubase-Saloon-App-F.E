@@ -40,12 +40,18 @@ export interface BarberProfile {
   isActive: boolean;
 }
 
+/** How the salon entered the list price · sale amount follows this for that service. Stored price is USD. */
+export type ServicePriceCurrency = 'USD' | 'CDF';
+
 export interface Service {
   id: string;
   branchId: string;
   name: string;
   description?: string | null;
+  /** Canonical amount in USD (ledger / splits). */
   basePrice: number;
+  /** Currency used when registering the catalog price (`basePrice`). */
+  priceCurrency: ServicePriceCurrency;
   durationMin?: number | null;
   isActive: boolean;
 }

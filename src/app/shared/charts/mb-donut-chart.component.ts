@@ -9,6 +9,7 @@ import {
   input,
 } from '@angular/core';
 import { Chart, registerables, type ChartConfiguration } from 'chart.js';
+import { CurrencyService } from '../../core/currency/currency.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { chartAxisColor, chartDonutCutoutBorder, chartFillSequence, chartTooltipStyle } from './chart-palette';
 
@@ -26,6 +27,7 @@ export class MbDonutChartComponent implements AfterViewInit, OnDestroy {
   readonly values = input.required<number[]>();
 
   private readonly theme = inject(ThemeService);
+  private readonly currency = inject(CurrencyService);
   private chart?: Chart;
   private viewReady = false;
 
@@ -34,6 +36,7 @@ export class MbDonutChartComponent implements AfterViewInit, OnDestroy {
       this.labels();
       this.values();
       this.theme.preference();
+      this.currency.displayCurrency();
       this.render();
     });
   }
@@ -98,6 +101,12 @@ export class MbDonutChartComponent implements AfterViewInit, OnDestroy {
             borderWidth: 1,
             padding: 12,
             cornerRadius: 10,
+            callbacks: {
+              label: (ctx) => {
+                const raw = ctx.dataset.data[ctx.dataIndex] as number;
+                return this.currency.format(Number(raw));
+              },
+            },
           },
         },
       },
