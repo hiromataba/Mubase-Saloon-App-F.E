@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbLineChartComponent } from '../../shared/charts/mb-line-chart.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -12,7 +13,7 @@ import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.com
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
 import { MbAvatarComponent } from '../../shared/ui/mb-avatar.component';
-import { formatDateTime, formatUsd } from '../../shared/formatters';
+import { formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -30,92 +31,96 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
   ],
   template: `
     @if (!auth.currentUser()?.barberProfileId) {
-      <mb-card title="Not a barber profile">
+      <mb-card [title]="i18n.t('page.myDesk.notBarberTitle')">
         <p class="text-sm text-slate-600 dark:text-slate-400">
-          Sign in with a barber demo account to see personal earnings.
+          {{ i18n.t('page.myDesk.notBarberBody') }}
         </p>
-        <mb-btn class="mt-4" variant="secondary" (click)="go('/dashboard')">Back</mb-btn>
+        <mb-btn class="mt-4" variant="secondary" (click)="go('/dashboard')">{{ i18n.t('common.back') }}</mb-btn>
       </mb-card>
     } @else {
       <div class="mx-auto max-w-5xl space-y-6 md:space-y-8 lg:space-y-10">
         <div class="mb-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between lg:gap-8">
           <div>
-            <h1 class="mb-page-title">My desk</h1>
-            <p class="mb-page-sub">Your performance · mock payouts</p>
+            <h1 class="mb-page-title">{{ i18n.t('page.myDesk.title') }}</h1>
+            <p class="mb-page-sub">{{ i18n.t('page.myDesk.subtitle') }}</p>
           </div>
-          <mb-btn variant="secondary" (click)="go('/transactions')">Transaction history</mb-btn>
+          <mb-btn variant="secondary" (click)="go('/transactions')">{{ i18n.t('page.myDesk.historyCta') }}</mb-btn>
         </div>
 
         <div class="mb-page-stats-lead grid gap-6 sm:grid-cols-3 lg:gap-8">
           <mb-stat-card
             icon="revenue"
-            label="Your earnings"
+            [label]="i18n.t('page.myDesk.statYourEarnings')"
             [value]="formatUsd(dash().summary.yourEarnings)"
             [trend]="barberCutTrend()"
           />
           <mb-stat-card
             icon="wallet"
-            label="Gross services"
+            [label]="i18n.t('page.myDesk.statGrossServices')"
             [value]="formatUsd(dash().summary.grossServiceTotal)"
           />
           <mb-stat-card
             icon="activity"
-            label="Completed services"
+            [label]="i18n.t('page.myDesk.statCompleted')"
             [value]="'' + dash().summary.servicesCount"
-            hint="All time in mock data"
+            [hint]="i18n.t('page.myDesk.statCompletedHint')"
           />
         </div>
 
-        <mb-card title="Earnings trend" subtitle="Your cut · last 14 service days in mock data">
-          <mb-line-chart [labels]="trend().labels" [values]="trend().values" label="Your earnings" />
+        <mb-card [title]="i18n.t('page.myDesk.earnTrendTitle')" [subtitle]="i18n.t('page.myDesk.earnTrendSub')">
+          <mb-line-chart
+            [labels]="trend().labels"
+            [values]="trend().values"
+            [label]="i18n.t('page.myDesk.chartYourEarnings')"
+          />
         </mb-card>
 
         <mb-quick-stats-row>
           <mb-quick-stat-tile
             variant="violet"
-            label="Your sales today"
+            [label]="i18n.t('page.myDesk.todaySales')"
             [value]="'' + txStats().todayCount"
-            [hint]="formatUsd(txStats().todayRevenue) + ' gross'"
+            [hint]="formatUsd(txStats().todayRevenue) + i18n.t('page.myDesk.hintGrossSuffix')"
           />
           <mb-quick-stat-tile
             variant="emerald"
-            label="This week"
+            [label]="i18n.t('page.myDesk.thisWeek')"
             [value]="'' + txStats().weekCount"
             [hint]="formatUsd(txStats().weekRevenue)"
           />
           <mb-quick-stat-tile
             variant="amber"
-            label="This month"
+            [label]="i18n.t('page.myDesk.thisMonth')"
             [value]="'' + txStats().monthCount"
             [hint]="formatUsd(txStats().monthRevenue)"
           />
           <mb-quick-stat-tile
             variant="sky"
-            label="Your cut (month)"
+            [label]="i18n.t('page.myDesk.yourCutMonth')"
             [value]="formatUsd(monthBarberCut())"
           />
         </mb-quick-stats-row>
 
-        <mb-card title="Recent cuts" subtitle="Newest first" [padding]="false">
+        <mb-card [title]="i18n.t('page.myDesk.recentCutsTitle')" [subtitle]="i18n.t('page.myDesk.recentCutsSub')" [padding]="false">
           @if (dash().recent.length === 0) {
-            <p class="p-6 py-8 text-center text-sm text-slate-500">No services yet.</p>
+            <p class="p-6 py-8 text-center text-sm text-slate-500">{{ i18n.t('page.myDesk.emptyServices') }}</p>
           } @else {
             <div class="mb-table-wrap hidden lg:block">
               <table class="w-full min-w-[600px]">
                 <thead>
                   <tr class="mb-table-head">
-                    <th>Date</th>
-                    <th>Branch</th>
-                    <th>Customer</th>
-                    <th>Service</th>
-                    <th class="text-right">You earned</th>
+                    <th>{{ i18n.t('page.myDesk.thDate') }}</th>
+                    <th>{{ i18n.t('page.myDesk.thBranch') }}</th>
+                    <th>{{ i18n.t('page.myDesk.thCustomer') }}</th>
+                    <th>{{ i18n.t('page.myDesk.thService') }}</th>
+                    <th class="text-right">{{ i18n.t('page.myDesk.thYouEarned') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   @for (t of pagedRecent(); track t.id) {
                     <tr class="mb-table-row">
                       <td class="mb-table-cell text-xs text-slate-500 dark:text-slate-400">
-                        {{ formatDateTime(t.paymentDate) }}
+                        {{ i18n.formatDateTime(t.paymentDate) }}
                       </td>
                       <td class="mb-table-cell">
                         <mb-badge tone="neutral" [caps]="false">{{ t.branch.code }}</mb-badge>
@@ -133,7 +138,9 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                         </div>
                       </td>
                       <td class="mb-table-cell text-slate-600 dark:text-slate-400">{{ t.serviceNameSnapshot }}</td>
-                      <td class="mb-table-cell text-right text-base font-semibold tabular-nums text-slate-900 dark:text-white">
+                      <td
+                        class="mb-table-cell text-right text-base font-semibold tabular-nums text-slate-900 dark:text-white"
+                      >
                         {{ formatUsd(t.barberEarning) }}
                       </td>
                     </tr>
@@ -155,7 +162,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                       {{ formatUsd(t.barberEarning) }}
                     </p>
                   </div>
-                  <p class="mt-2 text-xs text-slate-500">{{ formatDateTime(t.paymentDate) }} · {{ t.branch.code }}</p>
+                  <p class="mt-2 text-xs text-slate-500">{{ i18n.formatDateTime(t.paymentDate) }} · {{ t.branch.code }}</p>
                 </div>
               }
             </div>
@@ -175,10 +182,10 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
 export class MyDeskPageComponent {
   readonly auth = inject(AuthService);
   readonly db = inject(MockDatabaseService);
+  readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
 
   readonly formatUsd = formatUsd;
-  readonly formatDateTime = formatDateTime;
 
   readonly pageIndex = signal(0);
   readonly pageSize = signal(5);
@@ -217,7 +224,7 @@ export class MyDeskPageComponent {
     return {
       text: `${Math.abs(pct)}%`,
       up: pct >= 0,
-      hint: 'vs prior week',
+      hint: this.i18n.t('page.myDesk.trendVsWeek'),
     };
   });
 

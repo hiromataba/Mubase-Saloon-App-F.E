@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { BarberProfile, OwnerDashboardBarberRow } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -41,50 +42,50 @@ import { formatPct, formatUsd } from '../../shared/formatters';
     <div class="mx-auto max-w-7xl space-y-6 md:space-y-8 lg:space-y-10">
       <div class="mb-page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
         <div>
-          <h1 class="mb-page-title">Barbers</h1>
-          <p class="mb-page-sub">Roster · commissions · mock earnings</p>
+          <h1 class="mb-page-title">{{ i18n.t('page.barbers.title') }}</h1>
+          <p class="mb-page-sub">{{ i18n.t('page.barbers.subtitle') }}</p>
         </div>
         <div class="mb-toolbar w-full max-w-xl sm:flex-1 sm:justify-end">
           <input
             type="search"
             class="mb-input min-w-0 flex-1"
-            placeholder="Search barber or branch…"
+            [attr.placeholder]="i18n.t('page.barbers.searchPlaceholder')"
             [value]="query()"
             (input)="onQueryInput($event)"
           />
           @if (auth.canManageBarbers()) {
-            <mb-btn (click)="openCreate()">Create barber account</mb-btn>
+            <mb-btn (click)="openCreate()">{{ i18n.t('page.barbers.modalCreate') }}</mb-btn>
           }
         </div>
       </div>
 
       <mb-quick-stats-row lead>
-        <mb-quick-stat-tile variant="violet" label="Barbers" [value]="'' + barberStats().total" hint="In view" />
-        <mb-quick-stat-tile variant="emerald" label="Active" [value]="'' + barberStats().active" />
+        <mb-quick-stat-tile variant="violet" [label]="i18n.t('page.barbers.statBarbers')" [value]="'' + barberStats().total" [hint]="i18n.t('page.barbers.statInViewHint')" />
+        <mb-quick-stat-tile variant="emerald" [label]="i18n.t('page.barbers.statActive')" [value]="'' + barberStats().active" />
         <mb-quick-stat-tile
           variant="amber"
-          label="Gross services"
+          [label]="i18n.t('page.barbers.statGrossServices')"
           [value]="formatUsd(barberStats().gross)"
         />
         <mb-quick-stat-tile
           variant="sky"
-          label="Barber payouts"
+          [label]="i18n.t('page.barbers.statBarberPayouts')"
           [value]="formatUsd(barberStats().earned)"
         />
       </mb-quick-stats-row>
 
-      <mb-card [title]="'Team roster (' + filtered().length + ')'" subtitle="Sorted by gross service total" [padding]="false">
+      <mb-card [title]="i18n.t('page.barbers.rosterTitleLead') + ' (' + filtered().length + ')'" [subtitle]="i18n.t('page.barbers.rosterSubtitle')" [padding]="false">
         <div class="mb-table-wrap hidden lg:block">
           <table class="w-full min-w-[760px]">
             <thead>
               <tr class="mb-table-head">
-                <th>Barber</th>
-                <th>Branch</th>
-                <th>Split</th>
-                <th class="text-right">Services</th>
-                <th class="text-right">Gross</th>
-                <th class="text-right">Earned</th>
-                <th>Status</th>
+                <th>{{ i18n.t('page.barbers.thBarber') }}</th>
+                <th>{{ i18n.t('page.barbers.thBranch') }}</th>
+                <th>{{ i18n.t('page.barbers.thSplit') }}</th>
+                <th class="text-right">{{ i18n.t('page.barbers.thServices') }}</th>
+                <th class="text-right">{{ i18n.t('page.barbers.thGross') }}</th>
+                <th class="text-right">{{ i18n.t('page.barbers.thEarned') }}</th>
+                <th>{{ i18n.t('page.barbers.fieldStatus') }}</th>
                 <th class="w-14"></th>
               </tr>
             </thead>
@@ -118,11 +119,11 @@ import { formatPct, formatUsd } from '../../shared/formatters';
                   </td>
                   <td class="mb-table-cell">
                     <mb-badge [tone]="row.barber.isActive ? 'success' : 'neutral'" [caps]="false">
-                      {{ row.barber.isActive ? 'Active' : 'Off' }}
+                      {{ row.barber.isActive ? i18n.t('page.branches.statusActive') : i18n.t('page.barbers.badgeOff') }}
                     </mb-badge>
                   </td>
                   <td class="mb-table-cell text-right">
-                    <mb-action-menu [items]="menuForRow()" (picked)="onBarberMenu(row, $event)" />
+                    <mb-action-menu [items]="barberMenuItems()" (picked)="onBarberMenu(row, $event)" />
                   </td>
                 </tr>
               }
@@ -147,25 +148,25 @@ import { formatPct, formatUsd } from '../../shared/formatters';
                     <p class="text-xs text-slate-500">{{ row.branch.name }}</p>
                   </div>
                 </div>
-                <mb-action-menu [items]="menuForRow()" (picked)="onBarberMenu(row, $event)" />
+                <mb-action-menu [items]="barberMenuItems()" (picked)="onBarberMenu(row, $event)" />
               </div>
               <div class="mt-3 flex flex-wrap gap-2">
                 <mb-badge tone="success" [caps]="false">{{ formatPct(row.barber.commissionPercent) }}</mb-badge>
                 <mb-badge [tone]="row.barber.isActive ? 'success' : 'neutral'" [caps]="false">
-                  {{ row.barber.isActive ? 'Active' : 'Inactive' }}
+                  {{ row.barber.isActive ? i18n.t('page.branches.statusActive') : i18n.t('page.branches.statusInactive') }}
                 </mb-badge>
               </div>
               <dl class="mt-3 grid grid-cols-3 gap-2 text-xs">
                 <div>
-                  <dt class="text-slate-500">Services</dt>
+                  <dt class="text-slate-500">{{ i18n.t('page.barbers.dlServices') }}</dt>
                   <dd class="font-semibold">{{ row.servicesCount }}</dd>
                 </div>
                 <div>
-                  <dt class="text-slate-500">Gross</dt>
+                  <dt class="text-slate-500">{{ i18n.t('page.barbers.dlGross') }}</dt>
                   <dd class="font-semibold tabular-nums">{{ formatUsd(row.revenue) }}</dd>
                 </div>
                 <div>
-                  <dt class="text-slate-500">Earned</dt>
+                  <dt class="text-slate-500">{{ i18n.t('page.barbers.dlEarned') }}</dt>
                   <dd class="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                     {{ formatUsd(row.barberEarnings) }}
                   </dd>
@@ -174,7 +175,7 @@ import { formatPct, formatUsd } from '../../shared/formatters';
             </div>
           }
           @if (filtered().length === 0) {
-            <p class="py-8 text-center text-sm text-slate-500">No barbers match your search.</p>
+            <p class="py-8 text-center text-sm text-slate-500">{{ i18n.t('page.barbers.emptyMatch') }}</p>
           }
         </div>
 
@@ -190,46 +191,50 @@ import { formatPct, formatUsd } from '../../shared/formatters';
 
     <mb-modal
       [open]="formOpen()"
-      [title]="creating() ? 'Create barber account' : 'Edit barber'"
+      [title]="creating() ? i18n.t('page.barbers.modalCreate') : i18n.t('page.barbers.modalEdit')"
       size="lg"
       (backdropClose)="closeForm()"
       (closeClick)="closeForm()"
     >
       <form class="space-y-4" [formGroup]="barberForm" (ngSubmit)="saveBarber()">
         @if (creating()) {
-          <mb-field label="Work email (login)" hint="Demo auth still uses email match only">
+          <mb-field [label]="i18n.t('page.barbers.fieldWorkEmail')" [hint]="i18n.t('page.barbers.fieldWorkEmailHint')">
             <input type="email" class="mb-input" formControlName="email" autocomplete="off" />
           </mb-field>
-          <mb-field label="Full name">
+          <mb-field [label]="i18n.t('page.barbers.fieldFullName')">
             <input class="mb-input" formControlName="fullName" />
           </mb-field>
         }
-        <mb-field label="Display name">
+        <mb-field [label]="i18n.t('page.barbers.fieldDisplayName')">
           <input class="mb-input" formControlName="displayName" />
         </mb-field>
-        <mb-field label="Branch">
-          <mb-select formControlName="branchId" [options]="barberBranchOptions()" placeholder="Branch" />
+        <mb-field [label]="i18n.t('page.barbers.fieldBranch')">
+          <mb-select
+            formControlName="branchId"
+            [options]="barberBranchOptions()"
+            [placeholder]="i18n.t('page.barbers.placeholderBranch')"
+          />
         </mb-field>
-        <mb-field label="Commission %" hint="Barber share of service total">
+        <mb-field [label]="i18n.t('page.barbers.fieldCommission')" [hint]="i18n.t('page.barbers.fieldCommissionHint')">
           <input type="number" min="0" max="100" class="mb-input tabular-nums" formControlName="commissionPercent" />
         </mb-field>
         @if (!creating()) {
-          <mb-field label="Status">
-            <mb-select formControlName="isActive" [options]="activeStatusOptions" placeholder="Status" />
+          <mb-field [label]="i18n.t('page.barbers.fieldStatus')">
+            <mb-select formControlName="isActive" [options]="activeStatusOptions()" [placeholder]="i18n.t('page.barbers.placeholderStatus')" />
           </mb-field>
         }
         <div class="flex flex-wrap gap-2 pt-2">
-          <mb-btn type="submit" [disabled]="barberForm.invalid">Save</mb-btn>
-          <mb-btn type="button" variant="secondary" (click)="closeForm()">Cancel</mb-btn>
+          <mb-btn type="submit" [disabled]="barberForm.invalid">{{ i18n.t('common.save') }}</mb-btn>
+          <mb-btn type="button" variant="secondary" (click)="closeForm()">{{ i18n.t('common.cancel') }}</mb-btn>
         </div>
       </form>
     </mb-modal>
 
     <mb-confirm-dialog
       [open]="confirmOff()"
-      title="Deactivate barber?"
-      message="They’ll disappear from active selectors; history stays in mock data."
-      confirmLabel="Deactivate"
+      [title]="i18n.t('page.barbers.confirmOffTitle')"
+      [message]="i18n.t('page.barbers.confirmOffMessage')"
+      [confirmLabel]="i18n.t('common.deactivate')"
       [danger]="true"
       (confirm)="doDeactivate()"
       (cancel)="confirmOff.set(false)"
@@ -239,6 +244,7 @@ import { formatPct, formatUsd } from '../../shared/formatters';
 export class BarbersPageComponent {
   readonly auth = inject(AuthService);
   readonly db = inject(MockDatabaseService);
+  readonly i18n = inject(I18nService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
@@ -258,10 +264,10 @@ export class BarbersPageComponent {
     this.branches().map((b) => ({ value: b.id, label: b.name })),
   );
 
-  readonly activeStatusOptions: MbSelectOption[] = [
-    { value: 'true', label: 'Active' },
-    { value: 'false', label: 'Inactive' },
-  ];
+  readonly activeStatusOptions = computed((): MbSelectOption[] => [
+    { value: 'true', label: this.i18n.t('page.branches.statusActive') },
+    { value: 'false', label: this.i18n.t('page.branches.statusInactive') },
+  ]);
 
   readonly table = computed((): OwnerDashboardBarberRow[] => {
     const u = this.auth.currentUser();
@@ -342,16 +348,17 @@ export class BarbersPageComponent {
     });
   }
 
-  menuForRow(): MbActionMenuItem[] {
+  readonly barberMenuItems = computed((): MbActionMenuItem[] => {
+    const i = this.i18n;
     if (this.auth.canManageBarbers()) {
       return [
-        { id: 'perf', label: 'View performance' },
-        { id: 'edit', label: 'Edit barber' },
-        { id: 'off', label: 'Deactivate', danger: true },
+        { id: 'perf', label: i.t('actionMenu.viewPerformance') },
+        { id: 'edit', label: i.t('actionMenu.editBarber') },
+        { id: 'off', label: i.t('actionMenu.deactivate'), danger: true },
       ];
     }
-    return [{ id: 'perf', label: 'View performance' }];
-  }
+    return [{ id: 'perf', label: i.t('actionMenu.viewPerformance') }];
+  });
 
   readonly formOpen = signal(false);
   readonly creating = signal(false);

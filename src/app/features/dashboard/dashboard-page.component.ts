@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { NewSaleModalService } from '../operations/new-sale-modal.service';
 import { MbBarChartComponent } from '../../shared/charts/mb-bar-chart.component';
@@ -15,7 +16,7 @@ import { summarizeTransactionsByPeriod } from '../../shared/stats/transaction-pe
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
-import { formatDateTime, formatUsd } from '../../shared/formatters';
+import { formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -38,23 +39,23 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
       <div class="mb-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between lg:gap-8">
         <div>
           <h1 class="mb-page-title">
-            {{ auth.canViewOwnerDashboard() ? 'Dashboard' : 'Branch overview' }}
+            {{ auth.canViewOwnerDashboard() ? i18n.t('dash.title.owner') : i18n.t('dash.title.manager') }}
           </h1>
           <p class="mb-page-sub">
             @if (auth.canViewOwnerDashboard()) {
-              All barbershops · owner view · mock data (API-ready shape)
+              {{ i18n.t('dash.subtitle.owner') }}
             } @else {
-              Your assigned locations · manager view · no global admin controls
+              {{ i18n.t('dash.subtitle.manager') }}
             }
           </p>
         </div>
         <div class="flex flex-wrap gap-2">
           @if (auth.canOperateFrontDesk()) {
-            <mb-btn variant="secondary" (click)="saleModal.openModal()">New sale</mb-btn>
+            <mb-btn variant="secondary" (click)="saleModal.openModal()">{{ i18n.t('shell.newSale') }}</mb-btn>
           }
-          <mb-btn (click)="go('/transactions')">Transactions</mb-btn>
+          <mb-btn (click)="go('/transactions')">{{ i18n.t('nav.transactions') }}</mb-btn>
           @if (auth.canViewOwnerDashboard()) {
-            <mb-btn variant="secondary" (click)="go('/staff')">Staff</mb-btn>
+            <mb-btn variant="secondary" (click)="go('/staff')">{{ i18n.t('nav.staff') }}</mb-btn>
           }
         </div>
       </div>
@@ -62,67 +63,71 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
       <div class="mb-page-stats-lead grid gap-6 sm:grid-cols-2 xl:grid-cols-4 lg:gap-8">
         <mb-stat-card
           icon="revenue"
-          label="Gross revenue"
+          [label]="i18n.t('dash.stats.grossRevenue')"
           [value]="formatUsd(ownerView().totals.revenue)"
           [trend]="revenueStatTrend()"
         />
         <mb-stat-card
           icon="wallet"
-          label="Shop share"
+          [label]="i18n.t('dash.stats.shopShare')"
           [value]="formatUsd(ownerView().totals.shopEarnings)"
-          hint="After barber commissions"
+          [hint]="i18n.t('dash.stats.shopShareHint')"
         />
         <mb-stat-card
           icon="team"
-          label="Barber payouts"
+          [label]="i18n.t('dash.stats.barberPayouts')"
           [value]="formatUsd(ownerView().totals.barberEarnings)"
         />
         <mb-stat-card
           icon="activity"
-          label="Transactions"
+          [label]="i18n.t('nav.transactions')"
           [value]="'' + ownerView().totals.transactionCount"
-          hint="All time (mock)"
+          [hint]="i18n.t('dash.stats.transactionsHint')"
         />
       </div>
 
       <div class="grid gap-8 xl:grid-cols-2 xl:gap-10">
-        <mb-card title="Revenue trend" subtitle="Last 14 days · your scope">
-          <mb-line-chart [labels]="rev().labels" [values]="rev().values" label="Revenue" />
+        <mb-card [title]="i18n.t('dash.card.revTrend.title')" [subtitle]="i18n.t('dash.card.revTrend.subtitle')">
+          <mb-line-chart
+            [labels]="rev().labels"
+            [values]="rev().values"
+            [label]="i18n.t('dash.chart.revLabel')"
+          />
         </mb-card>
-        <mb-card title="Service mix" subtitle="Gross by service (top 8)">
+        <mb-card [title]="i18n.t('dash.card.serviceMix.title')" [subtitle]="i18n.t('dash.card.serviceMix.subtitle')">
           <mb-donut-chart [labels]="mix().labels" [values]="mix().values" />
         </mb-card>
-        <mb-card title="Branch performance" subtitle="Gross revenue by location">
+        <mb-card [title]="i18n.t('dash.card.branchPerf.title')" [subtitle]="i18n.t('dash.card.branchPerf.subtitle')">
           <mb-bar-chart [labels]="brChart().labels" [values]="brChart().values" />
         </mb-card>
-        <mb-card title="Barber earnings" subtitle="Top barbers · payout totals">
+        <mb-card [title]="i18n.t('dash.card.barberEarn.title')" [subtitle]="i18n.t('dash.card.barberEarn.subtitle')">
           <mb-bar-chart [labels]="barberChart().labels" [values]="barberChart().values" />
         </mb-card>
       </div>
 
       <div class="grid min-w-0 gap-6 lg:grid-cols-2 lg:gap-8">
         <div class="min-w-0 max-w-full">
-        <mb-card title="Branch table" subtitle="Revenue and shop share" [padding]="false">
+        <mb-card [title]="i18n.t('dash.card.branchTable.title')" [subtitle]="i18n.t('dash.card.branchTable.subtitle')" [padding]="false">
           <div class="max-w-full overflow-x-auto border-b border-mb-border p-4 lg:p-6 [-webkit-overflow-scrolling:touch]">
             <mb-quick-stats-row>
-              <mb-quick-stat-tile variant="violet" label="Locations" [value]="'' + branchTableStats().count" />
+              <mb-quick-stat-tile variant="violet" [label]="i18n.t('dash.stat.locations')" [value]="'' + branchTableStats().count" />
               <mb-quick-stat-tile
                 variant="emerald"
-                label="Revenue"
+                [label]="i18n.t('dash.stats.grossRevenue')"
                 [value]="formatUsd(branchTableStats().revenue)"
               />
-              <mb-quick-stat-tile variant="amber" label="Shop share" [value]="formatUsd(branchTableStats().shop)" />
-              <mb-quick-stat-tile variant="sky" label="Transactions" [value]="'' + branchTableStats().tx" />
+              <mb-quick-stat-tile variant="amber" [label]="i18n.t('dash.stats.shopShare')" [value]="formatUsd(branchTableStats().shop)" />
+              <mb-quick-stat-tile variant="sky" [label]="i18n.t('nav.transactions')" [value]="'' + branchTableStats().tx" />
             </mb-quick-stats-row>
           </div>
           <div class="mb-table-wrap hidden lg:block">
             <table class="w-full min-w-[420px]">
               <thead>
                 <tr class="mb-table-head">
-                  <th>Branch</th>
-                  <th class="text-right">Revenue</th>
-                  <th class="text-right">Shop</th>
-                  <th class="text-right">Tx</th>
+                  <th>{{ i18n.t('dash.branchTh.branch') }}</th>
+                  <th class="text-right">{{ i18n.t('dash.branchTh.revenue') }}</th>
+                  <th class="text-right">{{ i18n.t('dash.branchTh.shop') }}</th>
+                  <th class="text-right">{{ i18n.t('dash.branchTh.tx') }}</th>
                 </tr>
               </thead>
               <tbody>
@@ -157,15 +162,15 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                 </div>
                 <dl class="mt-4 space-y-2.5 text-sm">
                   <div class="flex items-baseline justify-between gap-3">
-                    <dt class="shrink-0 text-mb-text-secondary">Revenue</dt>
+                    <dt class="shrink-0 text-mb-text-secondary">{{ i18n.t('dash.branchMobile.rev') }}</dt>
                     <dd class="text-right font-semibold tabular-nums text-mb-text-primary">{{ formatUsd(row.revenue) }}</dd>
                   </div>
                   <div class="flex items-baseline justify-between gap-3">
-                    <dt class="shrink-0 text-mb-text-secondary">Shop</dt>
+                    <dt class="shrink-0 text-mb-text-secondary">{{ i18n.t('dash.branchMobile.shop') }}</dt>
                     <dd class="text-right font-semibold tabular-nums text-mb-primary">{{ formatUsd(row.shopEarnings) }}</dd>
                   </div>
                   <div class="flex items-baseline justify-between gap-3">
-                    <dt class="shrink-0 text-mb-text-secondary">Transactions</dt>
+                    <dt class="shrink-0 text-mb-text-secondary">{{ i18n.t('dash.branchMobile.tx') }}</dt>
                     <dd class="text-right font-semibold tabular-nums text-mb-text-primary">{{ row.transactionCount }}</dd>
                   </div>
                 </dl>
@@ -184,7 +189,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
         </div>
 
         <div class="min-w-0 max-w-full">
-        <mb-card title="Top barbers" subtitle="By gross service total">
+        <mb-card [title]="i18n.t('dash.topBarbers.title')" [subtitle]="i18n.t('dash.topBarbers.subtitle')">
           <ul class="min-w-0 max-w-full list-none space-y-3 p-0">
             @for (row of ownerView().byBarber.slice(0, 5); track row.barber.id) {
               <li
@@ -204,7 +209,9 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                 <div
                   class="mt-3 flex min-w-0 max-w-full flex-wrap items-center justify-between gap-2 border-t border-mb-border pt-3 sm:mt-4 md:mt-0 md:w-auto md:shrink-0 md:flex-col md:items-end md:border-0 md:pt-0 md:text-right"
                 >
-                  <mb-badge tone="neutral" [caps]="false">{{ row.servicesCount }} cuts</mb-badge>
+                  <mb-badge tone="neutral" [caps]="false"
+                    >{{ row.servicesCount }} {{ i18n.t('dash.servicesCountCuts') }}</mb-badge
+                  >
                   <p
                     class="min-w-0 max-w-full truncate text-right text-base font-semibold tabular-nums text-mb-text-primary md:max-w-none md:shrink-0 md:text-sm lg:text-base"
                   >
@@ -219,30 +226,30 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
       </div>
 
       @if (auth.isManagerWorkspace()) {
-        <mb-card title="Staff" subtitle="People with access to your branches" [padding]="false">
+        <mb-card [title]="i18n.t('dash.staff.cardTitle')" [subtitle]="i18n.t('dash.staff.cardSubtitle')" [padding]="false">
           @if (managerStaff().length === 0) {
-            <p class="p-6 text-sm text-slate-500">No staff assignments in mock data for your scope.</p>
+            <p class="p-6 text-sm text-slate-500">{{ i18n.t('dash.staff.empty') }}</p>
           } @else {
             <div class="border-b border-slate-100 p-4 dark:border-slate-800 lg:p-6">
               <mb-quick-stats-row>
-                <mb-quick-stat-tile variant="violet" label="People" [value]="'' + managerStaff().length" />
-                <mb-quick-stat-tile variant="emerald" label="Managers" [value]="'' + managerStaffRoleStats().managers" />
+                <mb-quick-stat-tile variant="violet" [label]="i18n.t('dash.staff.qPeople')" [value]="'' + managerStaff().length" />
+                <mb-quick-stat-tile variant="emerald" [label]="i18n.t('dash.staff.qManagers')" [value]="'' + managerStaffRoleStats().managers" />
                 <mb-quick-stat-tile
                   variant="amber"
-                  label="Accountants"
+                  [label]="i18n.t('dash.staff.qAccountants')"
                   [value]="'' + managerStaffRoleStats().accountants"
                 />
-                <mb-quick-stat-tile variant="sky" label="Reception" [value]="'' + managerStaffRoleStats().other" />
+                <mb-quick-stat-tile variant="sky" [label]="i18n.t('dash.staff.qReception')" [value]="'' + managerStaffRoleStats().other" />
               </mb-quick-stats-row>
             </div>
             <div class="mb-table-wrap hidden md:block">
               <table class="w-full min-w-[560px]">
                 <thead>
                   <tr class="mb-table-head">
-                    <th>Name</th>
-                    <th>Email</th>
-                    <th>Branch</th>
-                    <th>Role</th>
+                    <th>{{ i18n.t('dash.staff.thName') }}</th>
+                    <th>{{ i18n.t('dash.staff.thEmail') }}</th>
+                    <th>{{ i18n.t('dash.staff.thBranch') }}</th>
+                    <th>{{ i18n.t('dash.staff.thRole') }}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -292,42 +299,42 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
         </mb-card>
       }
 
-      <mb-card title="Recent activity" subtitle="Last 7 days · your scope" [padding]="false">
+      <mb-card [title]="i18n.t('dash.activity.title')" [subtitle]="i18n.t('dash.activity.subtitle')" [padding]="false">
         @if (pulseSorted().length === 0) {
-          <p class="p-6 py-8 text-center text-sm text-mb-text-secondary">No transactions this week in your view.</p>
+          <p class="p-6 py-8 text-center text-sm text-mb-text-secondary">{{ i18n.t('dash.activity.empty') }}</p>
         } @else {
           <div class="border-b border-mb-border p-4 lg:p-6">
             <mb-quick-stats-row>
-              <mb-quick-stat-tile variant="violet" label="7-day sales" [value]="'' + pulseSorted().length" />
+              <mb-quick-stat-tile variant="violet" [label]="i18n.t('dash.activity.qSales7')" [value]="'' + pulseSorted().length" />
               <mb-quick-stat-tile
                 variant="emerald"
-                label="Volume"
+                [label]="i18n.t('dash.activity.qVolume')"
                 [value]="formatUsd(pulseVolume())"
               />
               <mb-quick-stat-tile
                 variant="amber"
-                label="Avg ticket"
+                [label]="i18n.t('dash.activity.qAvgTicket')"
                 [value]="formatUsd(pulseAvgTicket())"
               />
-              <mb-quick-stat-tile variant="sky" label="Today" [value]="'' + pulsePeriodStats().todayCount" />
+              <mb-quick-stat-tile variant="sky" [label]="i18n.t('dash.activity.qToday')" [value]="'' + pulsePeriodStats().todayCount" />
             </mb-quick-stats-row>
           </div>
           <div class="mb-table-wrap hidden lg:block">
             <table class="w-full min-w-[720px]">
               <thead>
                 <tr class="mb-table-head">
-                  <th>When</th>
-                  <th>Branch</th>
-                  <th>Customer</th>
-                  <th>Barber</th>
-                  <th class="text-right">Total</th>
+                  <th>{{ i18n.t('dash.activity.thWhen') }}</th>
+                  <th>{{ i18n.t('dash.activity.thBranch') }}</th>
+                  <th>{{ i18n.t('dash.activity.thCustomer') }}</th>
+                  <th>{{ i18n.t('dash.activity.thBarber') }}</th>
+                  <th class="text-right">{{ i18n.t('dash.activity.thTotal') }}</th>
                 </tr>
               </thead>
               <tbody>
                 @for (t of pulsePaged(); track t.id) {
                   <tr class="mb-table-row">
                     <td class="mb-table-cell text-xs text-slate-500 dark:text-slate-400">
-                      {{ formatDateTime(t.paymentDate) }}
+                      {{ i18n.formatDateTime(t.paymentDate) }}
                     </td>
                     <td class="mb-table-cell">
                       <mb-badge tone="neutral" [caps]="false">{{ t.branch.code }}</mb-badge>
@@ -377,14 +384,16 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                         {{ t.customerNameSnapshot }}
                       </p>
                     </div>
-                    <p class="mt-2 text-xs text-mb-text-secondary">{{ formatDateTime(t.paymentDate) }}</p>
+                    <p class="mt-2 text-xs text-mb-text-secondary">{{ i18n.formatDateTime(t.paymentDate) }}</p>
                   </div>
                   <p class="shrink-0 text-base font-semibold tabular-nums text-mb-text-primary">
                     {{ formatUsd(t.totalAmount) }}
                   </p>
                 </div>
                 <div class="mt-4 border-t border-mb-border pt-3">
-                  <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-mb-text-secondary">Details</p>
+                  <p class="mb-2 text-[11px] font-semibold uppercase tracking-wide text-mb-text-secondary">
+                    {{ i18n.t('dash.activity.details') }}
+                  </p>
                   <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
                     <mb-badge tone="neutral" [caps]="false">{{ t.branch.code }}</mb-badge>
                     <div class="flex min-w-0 items-center gap-2">
@@ -418,9 +427,8 @@ export class DashboardPageComponent {
   readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
   readonly saleModal = inject(NewSaleModalService);
-
+  readonly i18n = inject(I18nService);
   readonly formatUsd = formatUsd;
-  readonly formatDateTime = formatDateTime;
 
   readonly branchPageIndex = signal(0);
   readonly branchPageSize = signal(5);
@@ -455,7 +463,7 @@ export class DashboardPageComponent {
     return {
       text: `${Math.abs(pct)}%`,
       up: pct >= 0,
-      hint: 'vs prior 7 days',
+      hint: this.i18n.t('dash.trend.vsPriorWeek'),
     };
   });
 

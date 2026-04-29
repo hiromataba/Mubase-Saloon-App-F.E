@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import type { Branch, Customer } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -41,45 +42,45 @@ import { formatDateTime } from '../../shared/formatters';
     <div class="mx-auto max-w-7xl space-y-6 md:space-y-8 lg:space-y-10">
       <div class="mb-page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
         <div>
-          <h1 class="mb-page-title">Customers</h1>
-          <p class="mb-page-sub">Branch directory · visits from mock transactions</p>
+          <h1 class="mb-page-title">{{ i18n.t('page.customers.title') }}</h1>
+          <p class="mb-page-sub">{{ i18n.t('page.customers.subtitle') }}</p>
         </div>
         <div class="flex w-full max-w-2xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-end lg:gap-6">
           <div class="mb-toolbar flex-1 sm:max-w-md">
             <input
               type="search"
               class="mb-input min-w-0 flex-1"
-              placeholder="Search name or WhatsApp…"
+              [attr.placeholder]="i18n.t('page.customers.searchPlaceholder')"
               [value]="query()"
               (input)="onQueryInput($event)"
             />
           </div>
-          <mb-btn (click)="openAdd()">Add customer</mb-btn>
+          <mb-btn (click)="openAdd()">{{ i18n.t('page.customers.modalAdd') }}</mb-btn>
         </div>
       </div>
 
       <mb-quick-stats-row lead>
-        <mb-quick-stat-tile variant="violet" label="Customers" [value]="'' + customerStats().count" />
-        <mb-quick-stat-tile variant="emerald" label="Total visits" [value]="'' + customerStats().visits" />
+        <mb-quick-stat-tile variant="violet" [label]="i18n.t('page.customers.statCount')" [value]="'' + customerStats().count" />
+        <mb-quick-stat-tile variant="emerald" [label]="i18n.t('page.customers.statVisits')" [value]="'' + customerStats().visits" />
         <mb-quick-stat-tile
           variant="amber"
-          label="With WhatsApp"
+          [label]="i18n.t('page.customers.statWithWa')"
           [value]="'' + customerStats().withWa"
           [hint]="customerStats().count ? customerStats().withWaPct + '%' : '—'"
         />
-        <mb-quick-stat-tile variant="sky" label="Branches" [value]="'' + customerStats().branchCount" />
+        <mb-quick-stat-tile variant="sky" [label]="i18n.t('page.customers.statBranches')" [value]="'' + customerStats().branchCount" />
       </mb-quick-stats-row>
 
-      <mb-card [title]="'Directory (' + filtered().length + ')'" subtitle="WhatsApp · last visit" [padding]="false">
+      <mb-card [title]="i18n.t('page.customers.dirTitleLead') + ' (' + filtered().length + ')'" [subtitle]="i18n.t('page.customers.dirSubtitle')" [padding]="false">
         <div class="mb-table-wrap hidden lg:block">
           <table class="w-full min-w-[840px]">
             <thead>
               <tr class="mb-table-head">
-                <th>Customer</th>
-                <th>Branch</th>
-                <th>WhatsApp</th>
-                <th class="text-right">Visits</th>
-                <th>Last visit</th>
+                <th>{{ i18n.t('page.customers.thCustomer') }}</th>
+                <th>{{ i18n.t('page.customers.labelBranch') }}</th>
+                <th>{{ i18n.t('page.customers.thWhatsapp') }}</th>
+                <th class="text-right">{{ i18n.t('page.customers.thVisits') }}</th>
+                <th>{{ i18n.t('page.customers.thLastVisit') }}</th>
                 <th class="w-14"></th>
               </tr>
             </thead>
@@ -109,7 +110,7 @@ import { formatDateTime } from '../../shared/formatters';
                     {{ row.lastVisit ? formatDateTime(row.lastVisit) : '—' }}
                   </td>
                   <td class="mb-table-cell text-right">
-                    <mb-action-menu [items]="customerMenuItems" (picked)="onCustomerMenu(row, $event)" />
+                    <mb-action-menu [items]="customerMenuItems()" (picked)="onCustomerMenu(row, $event)" />
                   </td>
                 </tr>
               }
@@ -127,13 +128,13 @@ import { formatDateTime } from '../../shared/formatters';
                   <p class="font-semibold text-slate-900 dark:text-white">{{ row.customer.fullName }}</p>
                   <p class="text-xs text-slate-500">{{ row.branch.name }}</p>
                 </div>
-                <mb-action-menu [items]="customerMenuItems" (picked)="onCustomerMenu(row, $event)" />
+                <mb-action-menu [items]="customerMenuItems()" (picked)="onCustomerMenu(row, $event)" />
               </div>
               <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                {{ row.customer.whatsapp || row.customer.phone || 'No WhatsApp' }}
+                {{ row.customer.whatsapp || row.customer.phone || i18n.t('page.customers.mobileNoWa') }}
               </p>
               <div class="mt-2 flex flex-wrap gap-2">
-                <mb-badge tone="info">{{ row.visits }} visits</mb-badge>
+                <mb-badge tone="info">{{ row.visits }} {{ i18n.t('page.customers.visitsCount') }}</mb-badge>
                 @if (row.lastVisit) {
                   <mb-badge tone="neutral">{{ formatDateTime(row.lastVisit) }}</mb-badge>
                 }
@@ -141,7 +142,7 @@ import { formatDateTime } from '../../shared/formatters';
             </div>
           }
           @if (filtered().length === 0) {
-            <p class="py-8 text-center text-sm text-slate-500">No customers match your search.</p>
+            <p class="py-8 text-center text-sm text-slate-500">{{ i18n.t('page.customers.emptyMatch') }}</p>
           }
         </div>
 
@@ -157,35 +158,43 @@ import { formatDateTime } from '../../shared/formatters';
 
     <mb-modal
       [open]="formOpen()"
-      [title]="editingId() ? 'Edit customer' : 'Add customer'"
+      [title]="editingId() ? i18n.t('page.customers.modalEdit') : i18n.t('page.customers.modalAdd')"
       size="lg"
       (backdropClose)="closeForm()"
       (closeClick)="closeForm()"
     >
       <form class="space-y-6" [formGroup]="custForm" (ngSubmit)="saveCustomer()">
-        <mb-field label="Branch">
-          <mb-select formControlName="branchId" [options]="customerBranchOptions()" placeholder="Branch" />
+        <mb-field [label]="i18n.t('page.customers.fieldBranch')">
+          <mb-select
+            formControlName="branchId"
+            [options]="customerBranchOptions()"
+            [placeholder]="i18n.t('page.customers.placeholderBranch')"
+          />
         </mb-field>
-        <mb-field label="Full name">
+        <mb-field [label]="i18n.t('page.customers.fieldFullName')">
           <input class="mb-input" formControlName="fullName" />
         </mb-field>
-        <mb-field label="WhatsApp number" hint="Optional" [optional]="true">
+        <mb-field
+          [label]="i18n.t('page.customers.fieldWhatsapp')"
+          [hint]="i18n.t('page.customers.fieldWhatsappHint')"
+          [optional]="true"
+        >
           <mb-phone-input formControlName="whatsapp" />
         </mb-field>
-        <mb-field label="Notes">
+        <mb-field [label]="i18n.t('page.customers.fieldNotes')">
           <textarea class="mb-input min-h-[88px] resize-y" formControlName="notes"></textarea>
         </mb-field>
         <div class="flex flex-wrap gap-2 pt-2">
-          <mb-btn type="submit" [disabled]="custForm.invalid">Save</mb-btn>
-          <mb-btn type="button" variant="secondary" (click)="closeForm()">Cancel</mb-btn>
+          <mb-btn type="submit" [disabled]="custForm.invalid">{{ i18n.t('common.save') }}</mb-btn>
+          <mb-btn type="button" variant="secondary" (click)="closeForm()">{{ i18n.t('common.cancel') }}</mb-btn>
         </div>
       </form>
     </mb-modal>
 
     <mb-modal
       [open]="detailOpen()"
-      [title]="detailCustomer()?.fullName ?? 'Customer'"
-      subtitle="Profile"
+      [title]="detailCustomer()?.fullName ?? i18n.t('page.customers.modalDetailFallback')"
+      [description]="i18n.t('page.customers.modalDetailDesc')"
       size="md"
       (backdropClose)="detailOpen.set(false)"
       (closeClick)="detailOpen.set(false)"
@@ -193,15 +202,15 @@ import { formatDateTime } from '../../shared/formatters';
       @if (detailCustomer(); as c) {
         <dl class="space-y-3 text-sm">
           <div>
-            <dt class="text-slate-500">Branch</dt>
+            <dt class="text-slate-500">{{ i18n.t('page.customers.labelBranch') }}</dt>
             <dd class="font-medium">{{ detailBranch()?.name }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">WhatsApp</dt>
+            <dt class="text-slate-500">{{ i18n.t('page.customers.labelWhatsapp') }}</dt>
             <dd class="font-medium">{{ c.whatsapp || c.phone || '—' }}</dd>
           </div>
           <div>
-            <dt class="text-slate-500">Notes</dt>
+            <dt class="text-slate-500">{{ i18n.t('page.customers.labelNotes') }}</dt>
             <dd class="font-medium">{{ c.notes || '—' }}</dd>
           </div>
         </dl>
@@ -210,9 +219,9 @@ import { formatDateTime } from '../../shared/formatters';
 
     <mb-confirm-dialog
       [open]="confirmDelete()"
-      title="Delete customer?"
-      message="This removes the CRM record only. Transaction history keeps snapshots."
-      confirmLabel="Delete"
+      [title]="i18n.t('page.customers.confirmDeleteTitle')"
+      [message]="i18n.t('page.customers.confirmDeleteMessage')"
+      [confirmLabel]="i18n.t('common.delete')"
       [danger]="true"
       (confirm)="doDelete()"
       (cancel)="confirmDelete.set(false)"
@@ -222,6 +231,7 @@ import { formatDateTime } from '../../shared/formatters';
 export class CustomersPageComponent {
   readonly auth = inject(AuthService);
   readonly db = inject(MockDatabaseService);
+  readonly i18n = inject(I18nService);
   private readonly fb = inject(FormBuilder);
 
   readonly formatDateTime = formatDateTime;
@@ -314,11 +324,11 @@ export class CustomersPageComponent {
     });
   }
 
-  readonly customerMenuItems: MbActionMenuItem[] = [
-    { id: 'view', label: 'View details' },
-    { id: 'edit', label: 'Edit' },
-    { id: 'del', label: 'Delete', danger: true },
-  ];
+  readonly customerMenuItems = computed((): MbActionMenuItem[] => [
+    { id: 'view', label: this.i18n.t('actionMenu.viewDetails') },
+    { id: 'edit', label: this.i18n.t('actionMenu.edit') },
+    { id: 'del', label: this.i18n.t('actionMenu.delete'), danger: true },
+  ]);
 
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);

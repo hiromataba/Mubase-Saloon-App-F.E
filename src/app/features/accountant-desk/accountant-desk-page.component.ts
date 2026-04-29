@@ -1,6 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { NewSaleModalService } from '../operations/new-sale-modal.service';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -10,7 +11,7 @@ import { summarizeTransactionsByPeriod } from '../../shared/stats/transaction-pe
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
-import { formatDateTime, formatUsd } from '../../shared/formatters';
+import { formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -30,26 +31,25 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
         class="rounded-2xl border border-mb-border bg-[var(--mb-primary-soft)] px-5 py-4 ring-1 ring-inset ring-[color-mix(in_srgb,var(--mb-primary)_15%,transparent)]"
       >
         <div class="flex flex-wrap items-center gap-2">
-          <mb-badge tone="success">Accountant</mb-badge>
+          <mb-badge tone="success">{{ i18n.t('page.accountant.roleBadge') }}</mb-badge>
           @for (b of branches(); track b.id) {
             <mb-badge tone="neutral">{{ b.name }}</mb-badge>
           }
         </div>
         <p class="mt-2 text-sm font-normal text-mb-text-secondary">
-          Record payments and receipts for your assigned barbershops. Management screens are hidden — use
-          <strong>New sale</strong> and <strong>Transactions</strong> only.
+          {{ i18n.t('page.accountant.heroLine') }}
         </p>
       </div>
 
       <div class="mb-page-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between lg:gap-8">
         <div>
-          <h1 class="mb-page-title">Front desk</h1>
-          <p class="mb-page-sub">Sales & receipts · manual WhatsApp follow-up</p>
+          <h1 class="mb-page-title">{{ i18n.t('page.accountant.title') }}</h1>
+          <p class="mb-page-sub">{{ i18n.t('page.accountant.subtitle') }}</p>
         </div>
-        <mb-btn (click)="saleModal.openModal()">New sale</mb-btn>
+        <mb-btn (click)="saleModal.openModal()">{{ i18n.t('shell.newSale') }}</mb-btn>
       </div>
 
-      <mb-card title="Your branches" subtitle="Assignment (mock)">
+      <mb-card [title]="i18n.t('page.accountant.branchesCardTitle')" [subtitle]="i18n.t('page.accountant.branchesCardSub')">
         <p class="text-sm text-slate-600 dark:text-slate-400">
           {{ branchSummary() }}
         </p>
@@ -58,28 +58,33 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
       <mb-quick-stats-row lead>
         <mb-quick-stat-tile
           variant="violet"
-          label="Today"
+          [label]="i18n.t('page.transactions.statToday')"
           [value]="'' + txStats().todayCount"
           [hint]="formatUsd(txStats().todayRevenue)"
         />
         <mb-quick-stat-tile
           variant="emerald"
-          label="This week"
+          [label]="i18n.t('page.transactions.statThisWeek')"
           [value]="'' + txStats().weekCount"
           [hint]="formatUsd(txStats().weekRevenue)"
         />
         <mb-quick-stat-tile
           variant="amber"
-          label="This month"
+          [label]="i18n.t('page.transactions.statThisMonth')"
           [value]="'' + txStats().monthCount"
           [hint]="formatUsd(txStats().monthRevenue)"
         />
-        <mb-quick-stat-tile variant="sky" label="All time" [value]="'' + scopedCount()" [hint]="formatUsd(scopedRevenue())" />
+        <mb-quick-stat-tile
+          variant="sky"
+          [label]="i18n.t('page.accountant.statAllTime')"
+          [value]="'' + scopedCount()"
+          [hint]="formatUsd(scopedRevenue())"
+        />
       </mb-quick-stats-row>
 
-      <mb-card title="Recent sales" subtitle="Newest first · paginated" [padding]="false">
+      <mb-card [title]="i18n.t('page.accountant.recentSalesTitle')" [subtitle]="i18n.t('page.accountant.recentSalesSub')" [padding]="false">
         @if (scopedSorted().length === 0) {
-          <p class="p-6 py-10 text-center text-sm text-slate-500">No transactions yet. Post your first sale.</p>
+          <p class="p-6 py-10 text-center text-sm text-slate-500">{{ i18n.t('page.accountant.emptyScoped') }}</p>
         } @else {
           <ul class="divide-y divide-slate-100 dark:divide-slate-800">
             @for (t of pagedSales(); track t.id) {
@@ -87,7 +92,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                 <div class="min-w-0">
                   <p class="font-medium text-slate-900 dark:text-white">{{ t.customerNameSnapshot }}</p>
                   <p class="text-xs text-slate-500">
-                    {{ t.branch.code }} · {{ formatDateTime(t.paymentDate) }}
+                    {{ t.branch.code }} · {{ i18n.formatDateTime(t.paymentDate) }}
                   </p>
                 </div>
                 <p class="shrink-0 text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
@@ -109,7 +114,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
               routerLink="/transactions"
               class="text-sm font-medium text-emerald-700 hover:text-emerald-600 dark:text-emerald-400"
             >
-              Open full transaction list →
+              {{ i18n.t('page.accountant.openFullList') }}
             </a>
           </div>
         }
@@ -119,11 +124,11 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
 })
 export class AccountantDeskPageComponent {
   readonly auth = inject(AuthService);
+  readonly i18n = inject(I18nService);
   private readonly db = inject(MockDatabaseService);
   readonly saleModal = inject(NewSaleModalService);
 
   readonly formatUsd = formatUsd;
-  readonly formatDateTime = formatDateTime;
 
   readonly pageIndex = signal(0);
   readonly pageSize = signal(5);

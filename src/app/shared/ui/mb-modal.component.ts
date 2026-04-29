@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { I18nService } from '../../core/locale/i18n.service';
 
 @Component({
   selector: 'mb-modal',
@@ -22,7 +23,7 @@ import { DOCUMENT } from '@angular/common';
         <button
           type="button"
           class="absolute inset-0 bg-[var(--mb-backdrop)] backdrop-blur-[4px]"
-          aria-label="Close dialog"
+          [attr.aria-label]="i18n.t('modal.ariaCloseDialog')"
           (click)="backdropClose.emit()"
         ></button>
         <div
@@ -50,7 +51,7 @@ import { DOCUMENT } from '@angular/common';
               type="button"
               class="-m-1 shrink-0 rounded-xl p-2 text-mb-text-secondary transition hover:bg-[var(--mb-hover-row)] hover:text-mb-text-primary"
               (click)="closeClick.emit()"
-              aria-label="Close"
+              [attr.aria-label]="i18n.t('modal.ariaClose')"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -74,6 +75,7 @@ import { DOCUMENT } from '@angular/common';
 })
 export class MbModalComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
+  readonly i18n = inject(I18nService);
 
   readonly open = input(false);
   readonly title = input('');

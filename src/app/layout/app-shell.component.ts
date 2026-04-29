@@ -3,6 +3,7 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { WorkspaceBrandingService } from '../core/branding/workspace-branding.service';
+import { I18nService } from '../core/locale/i18n.service';
 import { LocaleService } from '../core/locale/locale.service';
 import { LayoutService } from '../core/layout/layout.service';
 import { ThemeService } from '../core/theme/theme.service';
@@ -16,9 +17,9 @@ import { MbButtonComponent } from '../shared/ui/mb-button.component';
 import { filterNavForUser, type ShellNavItem } from './shell-nav';
 
 type QuickAction =
-  | { label: string; path: string; queryParams?: Record<string, string> }
-  | { label: string; action: 'sale' }
-  | { label: string; action: 'whatsapp' };
+  | { labelKey: string; path: string; queryParams?: Record<string, string> }
+  | { labelKey: string; action: 'sale' }
+  | { labelKey: string; action: 'whatsapp' };
 
 @Component({
   selector: 'app-shell',
@@ -40,7 +41,7 @@ type QuickAction =
         <button
           type="button"
           class="fixed inset-0 z-40 bg-[var(--mb-backdrop)] backdrop-blur-sm lg:hidden"
-          aria-label="Close menu"
+          [attr.aria-label]="i18n.t('shell.closeMenu')"
           (click)="mobileNav.set(false)"
         ></button>
       }
@@ -71,7 +72,7 @@ type QuickAction =
             <p class="truncate font-display text-sm font-semibold tracking-tight text-mb-text-primary">
               {{ branding.workspaceTitle() }}
             </p>
-            <p class="truncate text-xs font-medium text-mb-text-secondary">Salon ops</p>
+            <p class="truncate text-xs font-medium text-mb-text-secondary">{{ i18n.t('shell.salonOps') }}</p>
           </div>
         </div>
 
@@ -132,7 +133,7 @@ type QuickAction =
                   </svg>
                 }
               }
-              {{ item.label }}
+              {{ i18n.t(item.labelKey) }}
             </a>
           }
         </nav>
@@ -163,18 +164,16 @@ type QuickAction =
               type="button"
               class="rounded-lg p-2 text-mb-text-secondary hover:bg-[var(--mb-hover-row)] lg:hidden"
               (click)="toggleMobileNav()"
-              aria-label="Menu"
+              [attr.aria-label]="i18n.t('shell.menuAria')"
             >
               <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             </button>
             <div class="hidden sm:block">
-              <p class="text-xs font-medium uppercase tracking-wide text-mb-primary">
-                Internal
-              </p>
+              <p class="text-xs font-medium uppercase tracking-wide text-mb-primary">{{ i18n.t('shell.internal') }}</p>
               <div class="flex flex-wrap items-center gap-2">
-                <p class="font-display text-lg font-semibold text-mb-text-primary">Control center</p>
+                <p class="font-display text-lg font-semibold text-mb-text-primary">{{ i18n.t('shell.controlCenter') }}</p>
                 @if (auth.workspace()) {
                   <mb-badge tone="neutral" class="!text-[10px]">{{ auth.workspaceDisplay() }}</mb-badge>
                 }
@@ -185,7 +184,7 @@ type QuickAction =
             <div
               class="flex shrink-0 items-center rounded-xl border border-mb-border bg-mb-bg p-0.5 shadow-sm dark:bg-mb-elevated"
               role="group"
-              aria-label="Language"
+              [attr.aria-label]="i18n.t('shell.language')"
             >
               <button
                 type="button"
@@ -211,21 +210,23 @@ type QuickAction =
               </button>
             </div>
             @if (auth.canOperateFrontDesk()) {
-              <mb-btn size="sm" class="hidden sm:inline-flex" (click)="saleModal.openModal()">New sale</mb-btn>
+              <mb-btn size="sm" class="hidden sm:inline-flex" (click)="saleModal.openModal()">{{
+                i18n.t('shell.newSale')
+              }}</mb-btn>
             }
             @if (auth.isPureAccountant()) {
               <a
                 routerLink="/transactions"
                 class="hidden items-center justify-center rounded-xl border border-mb-border bg-mb-surface px-4 py-2 text-sm font-medium text-mb-text-primary shadow-sm transition hover:bg-mb-elevated md:inline-flex"
               >
-                Receipts
+                {{ i18n.t('shell.receipts') }}
               </a>
             }
             <button
               type="button"
               class="shrink-0 rounded-xl border border-mb-border bg-mb-surface p-2.5 text-mb-text-secondary shadow-sm transition hover:bg-mb-elevated hover:text-mb-text-primary"
               (click)="theme.toggleLightDark()"
-              [title]="theme.isDarkEffective() ? 'Light mode' : 'Dark mode'"
+              [title]="theme.isDarkEffective() ? i18n.t('shell.themeLight') : i18n.t('shell.themeDark')"
             >
               @if (theme.isDarkEffective()) {
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -244,7 +245,7 @@ type QuickAction =
                 (click)="openAccountMenu()"
                 aria-haspopup="dialog"
                 [attr.aria-expanded]="accountMenuOpen()"
-                [attr.aria-label]="'Account menu for ' + u.fullName"
+                [attr.aria-label]="i18n.t('shell.accountMenuFor') + u.fullName"
                 [title]="u.fullName + ' · ' + headerOrgLabel()"
               >
                 <mb-avatar [label]="u.fullName" [photoUrl]="u.photoUrl" size="md" />
@@ -271,21 +272,21 @@ type QuickAction =
           <div
             class="mb-2 flex gap-2 overflow-x-auto rounded-2xl border border-mb-border bg-mb-surface px-2 py-2 shadow-lg shadow-slate-900/10 dark:shadow-black/45"
           >
-            @for (q of quickActions(); track q.label) {
+            @for (q of quickActions(); track $index) {
               @if (isSaleAction(q)) {
                 <button
                   type="button"
                   class="shrink-0 rounded-xl bg-mb-primary px-3.5 py-2 text-xs font-semibold text-white shadow-sm active:scale-[0.98]"
                   (click)="goSalesWithNewSaleModal()"
                 >
-                  {{ q.label }}
+                  {{ i18n.t(q.labelKey) }}
                 </button>
               } @else if (isWhatsappAction(q)) {
                 <a
                   routerLink="/transactions"
                   class="shrink-0 rounded-xl border border-mb-border bg-[var(--mb-primary-soft)] px-3.5 py-2 text-xs font-semibold text-mb-primary shadow-sm"
                 >
-                  {{ q.label }}
+                  {{ i18n.t(q.labelKey) }}
                 </a>
               } @else if (isPathQuickAction(q)) {
                 <a
@@ -293,14 +294,14 @@ type QuickAction =
                   [queryParams]="q.queryParams ?? null"
                   class="shrink-0 rounded-xl border border-mb-border bg-mb-surface px-3.5 py-2 text-xs font-medium text-mb-text-primary shadow-sm"
                 >
-                  {{ q.label }}
+                  {{ i18n.t(q.labelKey) }}
                 </a>
               }
             }
           </div>
           <nav
             class="flex h-[3.75rem] items-stretch justify-around gap-0.5 rounded-2xl border border-mb-border bg-mb-surface px-1 py-0.5 shadow-lg shadow-slate-900/10 dark:shadow-black/45"
-            aria-label="Primary"
+            [attr.aria-label]="i18n.t('shell.primaryMobileNav')"
           >
             @for (tab of mobileTabs(); track tab.path) {
               <a
@@ -357,7 +358,7 @@ type QuickAction =
                     </svg>
                   }
                 }
-                <span class="truncate px-0.5">{{ tab.label }}</span>
+                <span class="truncate px-0.5">{{ i18n.t(tab.labelKey) }}</span>
               </a>
             }
           </nav>
@@ -373,6 +374,7 @@ type QuickAction =
 export class AppShellComponent {
   readonly auth = inject(AuthService);
   readonly locale = inject(LocaleService);
+  readonly i18n = inject(I18nService);
   readonly theme = inject(ThemeService);
   readonly layout = inject(LayoutService);
   readonly saleModal = inject(NewSaleModalService);
@@ -417,7 +419,11 @@ export class AppShellComponent {
     this.accountMenuOpen.set(false);
   }
 
-  readonly mobileTabs = computed((): { label: string; path: string; icon: ShellNavItem['icon'] }[] => {
+  readonly mobileTabs = computed((): {
+    labelKey: string;
+    path: string;
+    icon: ShellNavItem['icon'];
+  }[] => {
     const u = this.auth.currentUser();
     if (!u) {
       return [];
@@ -425,31 +431,31 @@ export class AppShellComponent {
     const w = this.auth.workspace();
     if (w === 'barber') {
       return [
-        { label: 'Desk', path: '/my-desk', icon: 'user' },
-        { label: 'Sales', path: '/transactions', icon: 'credit' },
-        { label: 'Settings', path: '/settings', icon: 'settings' },
+        { labelKey: 'mobile.desk', path: '/my-desk', icon: 'user' },
+        { labelKey: 'mobile.sales', path: '/transactions', icon: 'credit' },
+        { labelKey: 'nav.settings', path: '/settings', icon: 'settings' },
       ];
     }
     if (w === 'accountant') {
       return [
-        { label: 'Desk', path: '/accountant-desk', icon: 'clipboard' },
-        { label: 'Sales', path: '/transactions', icon: 'credit' },
-        { label: 'Settings', path: '/settings', icon: 'settings' },
+        { labelKey: 'mobile.desk', path: '/accountant-desk', icon: 'clipboard' },
+        { labelKey: 'mobile.sales', path: '/transactions', icon: 'credit' },
+        { labelKey: 'nav.settings', path: '/settings', icon: 'settings' },
       ];
     }
     if (w === 'manager') {
       return [
-        { label: 'Home', path: '/dashboard', icon: 'layout' },
-        { label: 'Barbers', path: '/barbers', icon: 'scissors' },
-        { label: 'Sales', path: '/transactions', icon: 'credit' },
-        { label: 'Settings', path: '/settings', icon: 'settings' },
+        { labelKey: 'mobile.home', path: '/dashboard', icon: 'layout' },
+        { labelKey: 'nav.barbers', path: '/barbers', icon: 'scissors' },
+        { labelKey: 'mobile.sales', path: '/transactions', icon: 'credit' },
+        { labelKey: 'nav.settings', path: '/settings', icon: 'settings' },
       ];
     }
     return [
-      { label: 'Home', path: '/dashboard', icon: 'layout' },
-      { label: 'Staff', path: '/staff', icon: 'users' },
-      { label: 'Sales', path: '/transactions', icon: 'credit' },
-      { label: 'More', path: '/settings', icon: 'settings' },
+      { labelKey: 'mobile.home', path: '/dashboard', icon: 'layout' },
+      { labelKey: 'nav.staff', path: '/staff', icon: 'users' },
+      { labelKey: 'mobile.sales', path: '/transactions', icon: 'credit' },
+      { labelKey: 'mobile.more', path: '/settings', icon: 'settings' },
     ];
   });
 
@@ -461,32 +467,32 @@ export class AppShellComponent {
     const w = this.auth.workspace();
     if (w === 'barber') {
       return [
-        { label: 'My earnings', path: '/my-desk' },
-        { label: 'My activity', path: '/transactions' },
-        { label: 'Profile', path: '/settings' },
+        { labelKey: 'qa.myEarnings', path: '/my-desk' },
+        { labelKey: 'qa.myActivity', path: '/transactions' },
+        { labelKey: 'qa.profile', path: '/settings' },
       ];
     }
     if (w === 'accountant') {
       return [
-        { label: 'New sale', action: 'sale' },
-        { label: 'Receipts', path: '/transactions' },
-        { label: 'WhatsApp', action: 'whatsapp' },
+        { labelKey: 'qa.newSale', action: 'sale' },
+        { labelKey: 'qa.receipts', path: '/transactions' },
+        { labelKey: 'qa.whatsapp', action: 'whatsapp' },
       ];
     }
     if (w === 'manager') {
       return [
-        { label: 'New sale', action: 'sale' },
-        { label: 'Barbers', path: '/barbers' },
-        { label: 'Sales', path: '/transactions' },
-        { label: 'Reports', path: '/dashboard' },
+        { labelKey: 'qa.newSale', action: 'sale' },
+        { labelKey: 'qa.barbers', path: '/barbers' },
+        { labelKey: 'qa.sales', path: '/transactions' },
+        { labelKey: 'qa.reports', path: '/dashboard' },
       ];
     }
     if (w === 'owner') {
       return [
-        { label: 'New sale', action: 'sale' },
-        { label: 'Add branch', path: '/branches', queryParams: { add: '1' } },
-        { label: 'Add staff', path: '/staff', queryParams: { add: '1' } },
-        { label: 'Add barber', path: '/barbers', queryParams: { add: '1' } },
+        { labelKey: 'qa.newSale', action: 'sale' },
+        { labelKey: 'qa.addBranch', path: '/branches', queryParams: { add: '1' } },
+        { labelKey: 'qa.addStaff', path: '/staff', queryParams: { add: '1' } },
+        { labelKey: 'qa.addBarber', path: '/barbers', queryParams: { add: '1' } },
       ];
     }
     return [];
@@ -496,15 +502,19 @@ export class AppShellComponent {
     return ['/dashboard', '/my-desk', '/accountant-desk'].includes(path);
   }
 
-  isSaleAction(q: QuickAction): q is { label: string; action: 'sale' } {
+  isSaleAction(q: QuickAction): q is { labelKey: string; action: 'sale' } {
     return 'action' in q && q.action === 'sale';
   }
 
-  isWhatsappAction(q: QuickAction): q is { label: string; action: 'whatsapp' } {
+  isWhatsappAction(q: QuickAction): q is { labelKey: string; action: 'whatsapp' } {
     return 'action' in q && q.action === 'whatsapp';
   }
 
-  isPathQuickAction(q: QuickAction): q is { label: string; path: string; queryParams?: Record<string, string> } {
+  isPathQuickAction(q: QuickAction): q is {
+    labelKey: string;
+    path: string;
+    queryParams?: Record<string, string>;
+  } {
     return 'path' in q;
   }
 

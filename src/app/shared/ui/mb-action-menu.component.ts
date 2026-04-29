@@ -1,5 +1,6 @@
 import { NgClass } from '@angular/common';
 import { Component, ElementRef, inject, input, output, signal } from '@angular/core';
+import { I18nService } from '../../core/locale/i18n.service';
 
 export interface MbActionMenuItem {
   id: string;
@@ -17,7 +18,7 @@ export interface MbActionMenuItem {
         type="button"
         class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-mb-border bg-mb-surface text-mb-text-secondary shadow-sm transition duration-150 hover:border-mb-border hover:bg-mb-elevated hover:text-mb-text-primary active:scale-[0.96] dark:shadow-mb-card-dark"
         [attr.aria-expanded]="menuOpen()"
-        [attr.aria-label]="'Open actions'"
+        [attr.aria-label]="i18n.t('actionMenu.ariaOpen')"
         (click)="onTrigger($event)"
       >
         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -56,6 +57,7 @@ export interface MbActionMenuItem {
   },
 })
 export class MbActionMenuComponent {
+  readonly i18n = inject(I18nService);
   private readonly host = inject(ElementRef);
 
   readonly items = input<MbActionMenuItem[]>([]);

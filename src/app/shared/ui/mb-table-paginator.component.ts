@@ -1,5 +1,6 @@
-import { Component, computed, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MbSelectComponent } from './mb-select.component';
 
 @Component({
@@ -13,7 +14,7 @@ import { MbSelectComponent } from './mb-select.component';
         class="mt-1.5 flex min-w-0 max-w-full flex-col gap-3 border-t border-mb-border bg-mb-elevated/30 px-3 py-3.5 text-sm text-mb-text-secondary sm:flex-row sm:items-center sm:justify-between sm:px-4 dark:bg-mb-elevated/20"
       >
         <div class="flex flex-wrap items-center gap-2">
-          <span class="text-xs font-medium text-mb-text-secondary">Rows per page</span>
+          <span class="text-xs font-medium text-mb-text-secondary">{{ i18n.t('paginator.rowsPerPage') }}</span>
           <mb-select
             class="w-[4.5rem]"
             [options]="pageSizeSelectOptions()"
@@ -25,7 +26,7 @@ import { MbSelectComponent } from './mb-select.component';
         </div>
         <div class="flex flex-wrap items-center gap-3">
           <span class="tabular-nums text-xs sm:text-sm">
-            {{ rangeStart() }}–{{ rangeEnd() }} of {{ total() }}
+            {{ rangeStart() }}–{{ rangeEnd() }} {{ i18n.t('paginator.rangeOf') }} {{ total() }}
           </span>
           <div class="flex items-center gap-1">
             <button
@@ -33,7 +34,7 @@ import { MbSelectComponent } from './mb-select.component';
               class="rounded-lg border border-mb-border p-1.5 text-mb-text-secondary transition hover:bg-mb-surface hover:shadow-sm disabled:opacity-40 dark:hover:bg-mb-elevated"
               [disabled]="page() <= 0"
               (click)="pageChange.emit(0)"
-              aria-label="First page"
+              [attr.aria-label]="i18n.t('paginator.ariaFirst')"
             >
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
@@ -44,7 +45,7 @@ import { MbSelectComponent } from './mb-select.component';
               class="rounded-lg border border-mb-border p-1.5 text-mb-text-secondary transition hover:bg-mb-surface hover:shadow-sm disabled:opacity-40 dark:hover:bg-mb-elevated"
               [disabled]="page() <= 0"
               (click)="pageChange.emit(page() - 1)"
-              aria-label="Previous page"
+              [attr.aria-label]="i18n.t('paginator.ariaPrev')"
             >
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -55,7 +56,7 @@ import { MbSelectComponent } from './mb-select.component';
               class="rounded-lg border border-mb-border p-1.5 text-mb-text-secondary transition hover:bg-mb-surface hover:shadow-sm disabled:opacity-40 dark:hover:bg-mb-elevated"
               [disabled]="page() >= lastPage()"
               (click)="pageChange.emit(page() + 1)"
-              aria-label="Next page"
+              [attr.aria-label]="i18n.t('paginator.ariaNext')"
             >
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
@@ -66,7 +67,7 @@ import { MbSelectComponent } from './mb-select.component';
               class="rounded-lg border border-mb-border p-1.5 text-mb-text-secondary transition hover:bg-mb-surface hover:shadow-sm disabled:opacity-40 dark:hover:bg-mb-elevated"
               [disabled]="page() >= lastPage()"
               (click)="pageChange.emit(lastPage())"
-              aria-label="Last page"
+              [attr.aria-label]="i18n.t('paginator.ariaLast')"
             >
               <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
@@ -79,6 +80,8 @@ import { MbSelectComponent } from './mb-select.component';
   `,
 })
 export class MbTablePaginatorComponent {
+  readonly i18n = inject(I18nService);
+
   readonly total = input.required<number>();
   readonly page = input.required<number>();
   readonly pageSize = input.required<number>();

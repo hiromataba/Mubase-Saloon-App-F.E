@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { Branch, BranchStaffRole } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -39,23 +40,23 @@ import { formatUsd } from '../../shared/formatters';
     <div class="mx-auto max-w-7xl space-y-6 md:space-y-8 lg:space-y-10">
       <div class="mb-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between lg:gap-8">
         <div>
-          <h1 class="mb-page-title">Branches</h1>
-          <p class="mb-page-sub">Locations · performance snapshot · mock directory</p>
+          <h1 class="mb-page-title">{{ i18n.t('page.branches.title') }}</h1>
+          <p class="mb-page-sub">{{ i18n.t('page.branches.subtitle') }}</p>
         </div>
         @if (isOwner()) {
-          <mb-btn (click)="openAdd()">Add branch</mb-btn>
+          <mb-btn (click)="openAdd()">{{ i18n.t('page.branches.modalAdd') }}</mb-btn>
         }
       </div>
 
       <mb-quick-stats-row lead>
-        <mb-quick-stat-tile variant="violet" label="Locations" [value]="'' + branchPortfolioStats().count" />
-        <mb-quick-stat-tile variant="emerald" label="Active" [value]="'' + branchPortfolioStats().active" />
+        <mb-quick-stat-tile variant="violet" [label]="i18n.t('page.branches.statLocations')" [value]="'' + branchPortfolioStats().count" />
+        <mb-quick-stat-tile variant="emerald" [label]="i18n.t('page.branches.statActive')" [value]="'' + branchPortfolioStats().active" />
         <mb-quick-stat-tile
           variant="amber"
-          label="Revenue"
+          [label]="i18n.t('page.branches.statRevenue')"
           [value]="formatUsd(branchPortfolioStats().revenue)"
         />
-        <mb-quick-stat-tile variant="sky" label="Transactions" [value]="'' + branchPortfolioStats().tx" />
+        <mb-quick-stat-tile variant="sky" [label]="i18n.t('page.branches.statTransactions')" [value]="'' + branchPortfolioStats().tx" />
       </mb-quick-stats-row>
 
       <div class="grid gap-6 md:grid-cols-2 lg:gap-8">
@@ -73,28 +74,28 @@ import { formatUsd } from '../../shared/formatters';
                 </div>
                 <div class="flex shrink-0 items-start gap-2">
                   <mb-badge [tone]="row.branch.isActive ? 'success' : 'neutral'">
-                    {{ row.branch.isActive ? 'Active' : 'Inactive' }}
+                    {{ row.branch.isActive ? i18n.t('page.branches.statusActive') : i18n.t('page.branches.statusInactive') }}
                   </mb-badge>
                   @if (isOwner()) {
-                    <mb-action-menu [items]="branchMenuItems" (picked)="onBranchMenu(row.branch, $event)" />
+                    <mb-action-menu [items]="branchMenuItems()" (picked)="onBranchMenu(row.branch, $event)" />
                   }
                 </div>
               </div>
               <dl class="mt-6 grid grid-cols-3 gap-4 border-t border-slate-100 pt-6 dark:border-slate-800">
                 <div>
-                  <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Revenue</dt>
+                  <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ i18n.t('page.branches.cardRevenueDt') }}</dt>
                   <dd class="mt-1 font-semibold tabular-nums text-slate-900 dark:text-white">
                     {{ formatUsd(row.revenue) }}
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Shop</dt>
+                  <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ i18n.t('page.branches.cardShopDt') }}</dt>
                   <dd class="mt-1 font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
                     {{ formatUsd(row.shopEarnings) }}
                   </dd>
                 </div>
                 <div>
-                  <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Tx</dt>
+                  <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ i18n.t('page.branches.cardTxDt') }}</dt>
                   <dd class="mt-1 font-semibold text-slate-900 dark:text-white">{{ row.transactionCount }}</dd>
                 </div>
               </dl>
@@ -106,8 +107,8 @@ import { formatUsd } from '../../shared/formatters';
 
     <mb-modal
       [open]="detailOpen()"
-      [title]="detailBranch()?.name ?? 'Branch'"
-      subtitle="Details & staff (mock)"
+      [title]="detailBranch()?.name ?? i18n.t('page.branches.modalDetailFallback')"
+      [description]="i18n.t('page.branches.modalDetailDesc')"
       size="lg"
       (backdropClose)="detailOpen.set(false)"
       (closeClick)="detailOpen.set(false)"
@@ -116,22 +117,22 @@ import { formatUsd } from '../../shared/formatters';
         <div class="space-y-6">
           <dl class="grid gap-3 text-sm sm:grid-cols-2">
             <div>
-              <dt class="text-slate-500">Code</dt>
+              <dt class="text-slate-500">{{ i18n.t('page.branches.labelCode') }}</dt>
               <dd class="font-medium">{{ b.code }}</dd>
             </div>
             <div>
-              <dt class="text-slate-500">Phone</dt>
+              <dt class="text-slate-500">{{ i18n.t('page.branches.labelPhone') }}</dt>
               <dd class="font-medium">{{ b.phone || '—' }}</dd>
             </div>
             <div class="sm:col-span-2">
-              <dt class="text-slate-500">Address</dt>
+              <dt class="text-slate-500">{{ i18n.t('page.branches.labelAddress') }}</dt>
               <dd class="font-medium">{{ b.address || '—' }}</dd>
             </div>
           </dl>
           @if (isOwner()) {
             <div class="rounded-xl border border-slate-100 dark:border-slate-800">
               <p class="border-b border-slate-100 px-4 py-3 text-sm font-semibold dark:border-slate-800">
-                Staff access
+                {{ i18n.t('page.branches.staffAccess') }}
               </p>
               <ul class="divide-y divide-slate-100 dark:divide-slate-800">
                 @for (s of staffRows(); track s.id) {
@@ -140,28 +141,38 @@ import { formatUsd } from '../../shared/formatters';
                       <p class="font-medium">{{ s.fullName }}</p>
                       <p class="text-xs text-slate-500">{{ s.role }}</p>
                     </div>
-                    <mb-btn variant="ghost" size="sm" (click)="removeStaff(s.id)">Remove</mb-btn>
+                    <mb-btn variant="ghost" size="sm" (click)="removeStaff(s.id)">{{
+                      i18n.t('page.branches.removeStaffBtn')
+                    }}</mb-btn>
                   </li>
                 }
                 @if (staffRows().length === 0) {
-                  <li class="px-4 py-6 text-center text-sm text-slate-500">No staff assigned in mock data.</li>
+                  <li class="px-4 py-6 text-center text-sm text-slate-500">{{ i18n.t('page.branches.noStaffMock') }}</li>
                 }
               </ul>
               <div class="space-y-3 border-t border-slate-100 p-4 dark:border-slate-800">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Assign user</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {{ i18n.t('page.branches.assignSection') }}
+                </p>
                 <div class="grid gap-3 sm:grid-cols-3">
-                  <mb-field label="User">
+                  <mb-field [label]="i18n.t('page.branches.fieldUser')">
                     <mb-select
                       [formControl]="assignForm.controls.userId"
                       [options]="assignUserOptions()"
-                      placeholder="Select…"
+                      [placeholder]="i18n.t('page.branches.placeholderSelect')"
                     />
                   </mb-field>
-                  <mb-field label="Role">
-                    <mb-select [formControl]="assignForm.controls.role" [options]="staffRoleOptions" placeholder="Role" />
+                  <mb-field [label]="i18n.t('page.staff.fieldRole')">
+                    <mb-select
+                      [formControl]="assignForm.controls.role"
+                      [options]="staffRoleOptions()"
+                      [placeholder]="i18n.t('page.staff.placeholderRole')"
+                    />
                   </mb-field>
                   <div class="flex items-end">
-                    <mb-btn class="w-full sm:w-auto" variant="secondary" (click)="submitAssign()">Assign</mb-btn>
+                    <mb-btn class="w-full sm:w-auto" variant="secondary" (click)="submitAssign()">{{
+                      i18n.t('page.branches.assignSubmit')
+                    }}</mb-btn>
                   </div>
                 </div>
               </div>
@@ -173,26 +184,30 @@ import { formatUsd } from '../../shared/formatters';
 
     <mb-modal
       [open]="editOpen()"
-      [title]="adding() ? 'Add branch' : 'Edit branch'"
+      [title]="adding() ? i18n.t('page.branches.modalAdd') : i18n.t('page.branches.modalEdit')"
       size="lg"
       (backdropClose)="closeEdit()"
       (closeClick)="closeEdit()"
     >
       <form class="space-y-6" [formGroup]="branchForm" (ngSubmit)="saveBranch()">
-        <mb-field label="Name">
+        <mb-field [label]="i18n.t('page.branches.fieldName')">
           <input class="mb-input" formControlName="name" />
         </mb-field>
-        <mb-field label="Code" hint="Short code for receipts">
+        <mb-field [label]="i18n.t('page.branches.fieldCode')" [hint]="i18n.t('page.branches.fieldCodeHint')">
           <input class="mb-input" formControlName="code" />
         </mb-field>
-        <mb-field label="Address">
+        <mb-field [label]="i18n.t('page.branches.fieldAddress')">
           <input class="mb-input" formControlName="address" />
         </mb-field>
-        <mb-field label="Phone">
+        <mb-field [label]="i18n.t('page.branches.fieldPhone')">
           <mb-phone-input formControlName="phone" />
         </mb-field>
-        <mb-field label="Status">
-          <mb-select formControlName="isActive" [options]="activeStatusOptions" placeholder="Status" />
+        <mb-field [label]="i18n.t('page.branches.fieldStatus')">
+          <mb-select
+            formControlName="isActive"
+            [options]="activeStatusOptions()"
+            [placeholder]="i18n.t('page.branches.placeholderStatus')"
+          />
         </mb-field>
         @if (adding()) {
           <label
@@ -204,25 +219,25 @@ import { formatUsd } from '../../shared/formatters';
               class="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-mb-primary focus:ring-mb-primary"
             />
             <span>
-              <span class="font-semibold text-slate-900 dark:text-slate-100">Create staff account</span>
+              <span class="font-semibold text-slate-900 dark:text-slate-100">{{ i18n.t('page.branches.createStaffLabel') }}</span>
               <span class="mt-0.5 block text-xs font-normal text-slate-500 dark:text-slate-400">
-                Adds a branch manager login in mock data and assigns them to this location.
+                {{ i18n.t('page.branches.createStaffHint') }}
               </span>
             </span>
           </label>
         }
         <div class="flex flex-wrap gap-2 pt-2">
-          <mb-btn type="submit" [disabled]="branchForm.invalid">Save</mb-btn>
-          <mb-btn type="button" variant="secondary" (click)="closeEdit()">Cancel</mb-btn>
+          <mb-btn type="submit" [disabled]="branchForm.invalid">{{ i18n.t('common.save') }}</mb-btn>
+          <mb-btn type="button" variant="secondary" (click)="closeEdit()">{{ i18n.t('common.cancel') }}</mb-btn>
         </div>
       </form>
     </mb-modal>
 
     <mb-confirm-dialog
       [open]="confirmDeactivate()"
-      title="Deactivate branch?"
-      message="Customers won’t see this branch in mock flows until reactivated."
-      confirmLabel="Deactivate"
+      [title]="i18n.t('page.branches.confirmDeactivateTitle')"
+      [message]="i18n.t('page.branches.confirmDeactivateMessage')"
+      [confirmLabel]="i18n.t('common.deactivate')"
       [danger]="true"
       (confirm)="confirmDeactivateBranch()"
       (cancel)="confirmDeactivate.set(false)"
@@ -230,9 +245,9 @@ import { formatUsd } from '../../shared/formatters';
 
     <mb-confirm-dialog
       [open]="confirmStaffRemove()"
-      title="Remove staff access?"
-      message="They’ll lose branch tools until reassigned (mock only)."
-      confirmLabel="Remove"
+      [title]="i18n.t('page.branches.confirmStaffRemoveTitle')"
+      [message]="i18n.t('page.branches.confirmStaffRemoveMessage')"
+      [confirmLabel]="i18n.t('common.remove')"
       [danger]="true"
       (confirm)="confirmRemoveStaff()"
       (cancel)="confirmStaffRemove.set(false)"
@@ -241,6 +256,7 @@ import { formatUsd } from '../../shared/formatters';
 })
 export class BranchesPageComponent {
   readonly auth = inject(AuthService);
+  readonly i18n = inject(I18nService);
   private readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -289,12 +305,12 @@ export class BranchesPageComponent {
 
   readonly isOwner = computed(() => !!this.auth.currentUser()?.isOwner);
 
-  readonly branchMenuItems: MbActionMenuItem[] = [
-    { id: 'detail', label: 'View details' },
-    { id: 'edit', label: 'Edit' },
-    { id: 'tx', label: 'Open transactions' },
-    { id: 'deactivate', label: 'Deactivate', danger: true },
-  ];
+  readonly branchMenuItems = computed((): MbActionMenuItem[] => [
+    { id: 'detail', label: this.i18n.t('actionMenu.viewDetails') },
+    { id: 'edit', label: this.i18n.t('actionMenu.edit') },
+    { id: 'tx', label: this.i18n.t('actionMenu.openTransactions') },
+    { id: 'deactivate', label: this.i18n.t('actionMenu.deactivate'), danger: true },
+  ]);
 
   readonly detailOpen = signal(false);
   readonly detailBranch = signal<Branch | null>(null);
@@ -320,19 +336,19 @@ export class BranchesPageComponent {
     role: this.fb.nonNullable.control<BranchStaffRole>('MANAGER'),
   });
 
-  readonly activeStatusOptions: MbSelectOption[] = [
-    { value: 'true', label: 'Active' },
-    { value: 'false', label: 'Inactive' },
-  ];
+  readonly activeStatusOptions = computed((): MbSelectOption[] => [
+    { value: 'true', label: this.i18n.t('page.branches.statusActive') },
+    { value: 'false', label: this.i18n.t('page.branches.statusInactive') },
+  ]);
 
-  readonly staffRoleOptions: MbSelectOption[] = [
-    { value: 'MANAGER', label: 'Manager' },
-    { value: 'ACCOUNTANT', label: 'Accountant' },
-    { value: 'RECEPTIONIST', label: 'Receptionist' },
-  ];
+  readonly staffRoleOptions = computed((): MbSelectOption[] => [
+    { value: 'MANAGER', label: this.i18n.t('login.role.manager') },
+    { value: 'ACCOUNTANT', label: this.i18n.t('login.role.accountant') },
+    { value: 'RECEPTIONIST', label: this.i18n.t('login.role.receptionist') },
+  ]);
 
   readonly assignUserOptions = computed((): MbSelectOption[] => [
-    { value: '', label: 'Select…' },
+    { value: '', label: this.i18n.t('page.branches.placeholderSelect') },
     ...this.assignableUsers().map((u) => ({ value: u.id, label: u.fullName })),
   ]);
 

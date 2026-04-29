@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { BranchStaffRole } from '../../data/models/domain.types';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
 import { MbButtonComponent } from '../../shared/ui/mb-button.component';
@@ -39,28 +40,28 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
     <div class="mx-auto max-w-7xl space-y-6 md:space-y-8 lg:space-y-10">
       <div class="mb-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between lg:gap-8">
         <div>
-          <h1 class="mb-page-title">Staff</h1>
-          <p class="mb-page-sub">Managers, accountants, assignments · owner only (mock)</p>
+          <h1 class="mb-page-title">{{ i18n.t('page.staff.title') }}</h1>
+          <p class="mb-page-sub">{{ i18n.t('page.staff.subtitle') }}</p>
         </div>
-        <mb-btn (click)="openInvite()">Create staff & assign</mb-btn>
+        <mb-btn (click)="openInvite()">{{ i18n.t('page.staff.inviteTopCta') }}</mb-btn>
       </div>
 
       <mb-quick-stats-row lead>
-        <mb-quick-stat-tile variant="violet" label="Assignments" [value]="'' + staffStats().total" />
-        <mb-quick-stat-tile variant="emerald" label="Managers" [value]="'' + staffStats().managers" />
-        <mb-quick-stat-tile variant="amber" label="Accountants" [value]="'' + staffStats().accountants" />
-        <mb-quick-stat-tile variant="sky" label="Branches" [value]="'' + staffStats().branches" />
+        <mb-quick-stat-tile variant="violet" [label]="i18n.t('page.staff.statAssignments')" [value]="'' + staffStats().total" />
+        <mb-quick-stat-tile variant="emerald" [label]="i18n.t('page.staff.statManagers')" [value]="'' + staffStats().managers" />
+        <mb-quick-stat-tile variant="amber" [label]="i18n.t('page.staff.statAccountants')" [value]="'' + staffStats().accountants" />
+        <mb-quick-stat-tile variant="sky" [label]="i18n.t('page.staff.statBranches')" [value]="'' + staffStats().branches" />
       </mb-quick-stats-row>
 
-      <mb-card [title]="'All assignments (' + rows().length + ')'" subtitle="Across barbershops" [padding]="false">
+      <mb-card [title]="i18n.t('page.staff.cardTitleLead') + ' (' + rows().length + ')'" [subtitle]="i18n.t('page.staff.cardSubtitle')" [padding]="false">
         <div class="mb-table-wrap hidden lg:block">
           <table class="w-full min-w-[820px]">
             <thead>
               <tr class="mb-table-head">
-                <th>Name</th>
-                <th>Email</th>
-                <th>Branch</th>
-                <th>Role</th>
+                <th>{{ i18n.t('page.staff.thName') }}</th>
+                <th>{{ i18n.t('page.staff.thEmail') }}</th>
+                <th>{{ i18n.t('page.staff.thBranch') }}</th>
+                <th>{{ i18n.t('page.staff.thRole') }}</th>
                 <th class="w-14"></th>
               </tr>
             </thead>
@@ -85,7 +86,7 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
                     <mb-badge [tone]="roleTone(row.assignment.role)" [caps]="false">{{ row.assignment.role }}</mb-badge>
                   </td>
                   <td class="mb-table-cell text-right">
-                    <mb-action-menu [items]="staffMenuItems" (picked)="onStaffMenu(row.assignment.id, $event)" />
+                    <mb-action-menu [items]="staffMenuItems()" (picked)="onStaffMenu(row.assignment.id, $event)" />
                   </td>
                 </tr>
               }
@@ -102,7 +103,7 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
                   <p class="font-semibold text-slate-900 dark:text-white">{{ row.user.fullName }}</p>
                   <p class="text-xs text-slate-500">{{ row.user.email }}</p>
                 </div>
-                <mb-action-menu [items]="staffMenuItems" (picked)="onStaffMenu(row.assignment.id, $event)" />
+                <mb-action-menu [items]="staffMenuItems()" (picked)="onStaffMenu(row.assignment.id, $event)" />
               </div>
               <div class="mt-2 flex flex-wrap gap-2">
                 <mb-badge tone="neutral">{{ row.branch.name }}</mb-badge>
@@ -124,41 +125,48 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
 
     <mb-modal
       [open]="inviteOpen()"
-      title="Create staff account"
-      description="Adds a login user and assigns a role at one barbershop."
+      [title]="i18n.t('page.staff.modalTitle')"
+      [description]="i18n.t('page.staff.modalDesc')"
       size="lg"
       (backdropClose)="inviteOpen.set(false)"
       (closeClick)="inviteOpen.set(false)"
     >
       <form class="space-y-4" [formGroup]="inviteForm" (ngSubmit)="submitInvite()">
-        <mb-field label="Work email">
+        <mb-field [label]="i18n.t('page.staff.fieldEmail')">
           <input type="email" class="mb-input" formControlName="email" autocomplete="off" />
         </mb-field>
-        <mb-field label="Full name">
+        <mb-field [label]="i18n.t('page.staff.fieldFullName')">
           <input class="mb-input" formControlName="fullName" />
         </mb-field>
-        <mb-field label="Barbershop">
-          <mb-select formControlName="branchId" [options]="inviteBranchOptions()" placeholder="Branch" />
+        <mb-field [label]="i18n.t('page.staff.fieldBarbershop')">
+          <mb-select
+            formControlName="branchId"
+            [options]="inviteBranchOptions()"
+            [placeholder]="i18n.t('page.staff.placeholderBranch')"
+          />
         </mb-field>
-        <mb-field label="Role">
-          <mb-select formControlName="role" [options]="staffRoleOptions" placeholder="Role" />
+        <mb-field [label]="i18n.t('page.staff.fieldRole')">
+          <mb-select
+            formControlName="role"
+            [options]="staffRoleOptions()"
+            [placeholder]="i18n.t('page.staff.placeholderRole')"
+          />
         </mb-field>
         <p class="text-xs text-slate-500">
-          Same person can hold manager + accountant at one shop: add one role, save, then add the second role
-          with the same email (mock creates a second assignment).
+          {{ i18n.t('page.staff.inviteHint') }}
         </p>
         <div class="flex flex-wrap gap-2 pt-2">
-          <mb-btn type="submit" [disabled]="inviteForm.invalid">Create & assign</mb-btn>
-          <mb-btn type="button" variant="secondary" (click)="inviteOpen.set(false)">Cancel</mb-btn>
+          <mb-btn type="submit" [disabled]="inviteForm.invalid">{{ i18n.t('page.staff.submitInvite') }}</mb-btn>
+          <mb-btn type="button" variant="secondary" (click)="inviteOpen.set(false)">{{ i18n.t('common.cancel') }}</mb-btn>
         </div>
       </form>
     </mb-modal>
 
     <mb-confirm-dialog
       [open]="confirmRemove()"
-      title="Remove assignment?"
-      message="They lose access to this branch until reassigned (mock only)."
-      confirmLabel="Remove"
+      [title]="i18n.t('page.staff.confirmRemoveTitle')"
+      [message]="i18n.t('page.staff.confirmRemoveMessage')"
+      [confirmLabel]="i18n.t('common.remove')"
       [danger]="true"
       (confirm)="doRemove()"
       (cancel)="confirmRemove.set(false)"
@@ -167,6 +175,7 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
 })
 export class StaffPageComponent {
   readonly db = inject(MockDatabaseService);
+  readonly i18n = inject(I18nService);
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -230,13 +239,15 @@ export class StaffPageComponent {
     this.allBranches().map((b) => ({ value: b.id, label: b.name })),
   );
 
-  readonly staffRoleOptions: MbSelectOption[] = [
-    { value: 'MANAGER', label: 'Manager' },
-    { value: 'ACCOUNTANT', label: 'Accountant' },
-    { value: 'RECEPTIONIST', label: 'Receptionist' },
-  ];
+  readonly staffRoleOptions = computed((): MbSelectOption[] => [
+    { value: 'MANAGER', label: this.i18n.t('login.role.manager') },
+    { value: 'ACCOUNTANT', label: this.i18n.t('login.role.accountant') },
+    { value: 'RECEPTIONIST', label: this.i18n.t('login.role.receptionist') },
+  ]);
 
-  readonly staffMenuItems: MbActionMenuItem[] = [{ id: 'remove', label: 'Remove assignment', danger: true }];
+  readonly staffMenuItems = computed((): MbActionMenuItem[] => [
+    { id: 'remove', label: this.i18n.t('actionMenu.removeAssignment'), danger: true },
+  ]);
 
   readonly inviteOpen = signal(false);
   readonly confirmRemove = signal(false);

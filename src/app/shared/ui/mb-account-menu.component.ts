@@ -2,6 +2,7 @@ import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import type { AppWorkspace } from '../../core/auth/workspace';
+import { I18nService } from '../../core/locale/i18n.service';
 import { WorkspaceBrandingService } from '../../core/branding/workspace-branding.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbAvatarComponent } from './mb-avatar.component';
@@ -9,8 +10,8 @@ import { MbButtonComponent } from './mb-button.component';
 
 export interface MbAccountMenuItem {
   path: string;
-  label: string;
-  hint: string;
+  labelKey: string;
+  hintKey: string;
   /** Tailwind bg class for icon tile */
   iconBg: string;
   iconStroke: string;
@@ -67,7 +68,7 @@ export interface MbAccountMenuItem {
           </div>
         </div>
 
-        <nav class="max-h-[min(50vh,22rem)] overflow-y-auto px-2 py-2" aria-label="Account">
+        <nav class="max-h-[min(50vh,22rem)] overflow-y-auto px-2 py-2" [attr.aria-label]="i18n.t('menu.navAria')">
           @for (item of menuItems(); track item.path) {
             <a
               [routerLink]="item.path"
@@ -83,8 +84,8 @@ export interface MbAccountMenuItem {
                 </svg>
               </div>
               <div class="min-w-0 flex-1">
-                <p class="text-sm font-semibold text-mb-text-primary">{{ item.label }}</p>
-                <p class="text-xs text-mb-text-secondary">{{ item.hint }}</p>
+                <p class="text-sm font-semibold text-mb-text-primary">{{ i18n.t(item.labelKey) }}</p>
+                <p class="text-xs text-mb-text-secondary">{{ i18n.t(item.hintKey) }}</p>
               </div>
               <svg
                 class="h-4 w-4 shrink-0 text-mb-text-secondary opacity-70"
@@ -109,7 +110,7 @@ export interface MbAccountMenuItem {
                   d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
                 />
               </svg>
-              Log out
+              {{ i18n.t('menu.logout') }}
             </span>
           </mb-btn>
         </div>
@@ -125,6 +126,7 @@ export class MbAccountMenuComponent {
   readonly auth = inject(AuthService);
   readonly branding = inject(WorkspaceBrandingService);
   private readonly db = inject(MockDatabaseService);
+  readonly i18n = inject(I18nService);
 
   readonly user = computed(() => this.auth.currentUser());
 
@@ -160,8 +162,8 @@ export class MbAccountMenuComponent {
     const rows: MbAccountMenuItem[] = [
       {
         path: '/settings',
-        label: 'Settings',
-        hint: 'Profile & workspace',
+        labelKey: 'menu.settings',
+        hintKey: 'menu.settingsHint',
         iconBg: 'bg-sky-500/12 dark:bg-sky-400/15',
         iconStroke: 'text-sky-600 dark:text-sky-300',
         svgPath:
@@ -172,8 +174,8 @@ export class MbAccountMenuComponent {
     if (w === 'owner' || w === 'manager') {
       rows.push({
         path: '/dashboard',
-        label: 'Dashboard',
-        hint: 'Overview & performance',
+        labelKey: 'menu.dashboard',
+        hintKey: 'menu.dashboardHint',
         iconBg: 'bg-violet-500/12 dark:bg-violet-400/15',
         iconStroke: 'text-violet-600 dark:text-violet-300',
         svgPath:
@@ -182,8 +184,8 @@ export class MbAccountMenuComponent {
     } else if (w === 'barber') {
       rows.push({
         path: '/my-desk',
-        label: 'My desk',
-        hint: 'Earnings & activity',
+        labelKey: 'nav.myDesk',
+        hintKey: 'menu.myDeskHint',
         iconBg: 'bg-emerald-500/12 dark:bg-emerald-400/15',
         iconStroke: 'text-emerald-600 dark:text-emerald-300',
         svgPath:
@@ -192,8 +194,8 @@ export class MbAccountMenuComponent {
     } else if (w === 'accountant') {
       rows.push({
         path: '/accountant-desk',
-        label: 'Front desk',
-        hint: 'Checkout & receipts',
+        labelKey: 'nav.frontDesk',
+        hintKey: 'menu.frontDeskHint',
         iconBg: 'bg-amber-500/12 dark:bg-amber-400/15',
         iconStroke: 'text-amber-700 dark:text-amber-300',
         svgPath:
@@ -203,8 +205,8 @@ export class MbAccountMenuComponent {
 
     rows.push({
       path: '/transactions',
-      label: 'Transactions',
-      hint: 'Sales & receipt history',
+      labelKey: 'nav.transactions',
+      hintKey: 'menu.transactionsHint',
       iconBg: 'bg-[var(--mb-primary-soft)]',
       iconStroke: 'text-mb-primary',
       svgPath: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z',
@@ -213,8 +215,8 @@ export class MbAccountMenuComponent {
     if (w === 'owner') {
       rows.push({
         path: '/staff',
-        label: 'Staff',
-        hint: 'People & branch access',
+        labelKey: 'nav.staff',
+        hintKey: 'menu.staffHint',
         iconBg: 'bg-indigo-500/12 dark:bg-indigo-400/15',
         iconStroke: 'text-indigo-600 dark:text-indigo-300',
         svgPath:
@@ -223,8 +225,8 @@ export class MbAccountMenuComponent {
     } else if (w === 'manager') {
       rows.push({
         path: '/barbers',
-        label: 'Barbers',
-        hint: 'Roster & commissions',
+        labelKey: 'nav.barbers',
+        hintKey: 'menu.barbersHint',
         iconBg: 'bg-rose-500/12 dark:bg-rose-400/15',
         iconStroke: 'text-rose-600 dark:text-rose-300',
         svgPath:

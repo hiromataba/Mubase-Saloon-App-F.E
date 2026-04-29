@@ -3,6 +3,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { I18nService } from '../../core/locale/i18n.service';
 import type { TransactionListItem } from '../../data/models/domain.types';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { summarizeTransactionsByPeriod } from '../../shared/stats/transaction-period-stats';
@@ -18,11 +19,9 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
 import { MbAvatarComponent } from '../../shared/ui/mb-avatar.component';
 import { MbIconButtonComponent } from '../../shared/ui/mb-icon-button.component';
 import {
-  formatDateTime,
   formatPct,
   formatUsd,
   paymentMethodBadgeTone,
-  paymentMethodLabel,
 } from '../../shared/formatters';
 
 @Component({
@@ -46,8 +45,8 @@ import {
     <div class="mx-auto max-w-7xl space-y-6 md:space-y-8 lg:space-y-10">
       <div class="mb-page-header flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-8">
         <div>
-          <h1 class="mb-page-title">Transactions</h1>
-          <p class="mb-page-sub max-lg:hidden">Ledger · details and receipt preview</p>
+          <h1 class="mb-page-title">{{ i18n.t('page.transactions.title') }}</h1>
+          <p class="mb-page-sub max-lg:hidden">{{ i18n.t('page.transactions.subtitle') }}</p>
         </div>
         <div class="mb-toolbar flex-1 lg:max-w-3xl lg:justify-end">
           <mb-select
@@ -55,18 +54,18 @@ import {
             [options]="branchFilterOptions()"
             [ngModel]="branchFilter()"
             (ngModelChange)="onBranchFilter($event)"
-            placeholder="All branches"
+            [placeholder]="i18n.t('page.transactions.filterAllBranches')"
           />
           <mb-select
             class="min-w-0 flex-1 sm:max-w-[11rem]"
             [options]="barberFilterOptions()"
             [ngModel]="barberFilter()"
             (ngModelChange)="onBarberFilter($event)"
-            placeholder="All barbers"
+            [placeholder]="i18n.t('page.transactions.filterAllBarbers')"
           />
           <input
             type="search"
-            placeholder="Search customer or receipt…"
+            [placeholder]="i18n.t('page.transactions.searchPlaceholder')"
             [ngModel]="query()"
             (ngModelChange)="onQuery($event)"
             class="mb-input min-w-0 flex-1 sm:max-w-xs"
@@ -77,27 +76,27 @@ import {
       <mb-quick-stats-row lead>
         <mb-quick-stat-tile
           variant="violet"
-          label="Today"
+          [label]="i18n.t('page.transactions.statToday')"
           [value]="'' + txStats().todayCount"
-          [hint]="formatUsd(txStats().todayRevenue) + ' · filtered list'"
+          [hint]="formatUsd(txStats().todayRevenue) + i18n.t('page.transactions.hintFilteredListSuffix')"
         />
         <mb-quick-stat-tile
           variant="emerald"
-          label="This week"
+          [label]="i18n.t('page.transactions.statThisWeek')"
           [value]="'' + txStats().weekCount"
           [hint]="formatUsd(txStats().weekRevenue)"
         />
         <mb-quick-stat-tile
           variant="amber"
-          label="This month"
+          [label]="i18n.t('page.transactions.statThisMonth')"
           [value]="'' + txStats().monthCount"
           [hint]="formatUsd(txStats().monthRevenue)"
         />
         <mb-quick-stat-tile
           variant="sky"
-          label="Filtered total"
+          [label]="i18n.t('page.transactions.statFilteredTotal')"
           [value]="formatUsd(filteredRevenue())"
-          [hint]="filtered().length + ' sales'"
+          [hint]="'' + filtered().length + i18n.t('page.transactions.salesCountSuffix')"
         />
       </mb-quick-stats-row>
 
@@ -106,14 +105,14 @@ import {
           <table class="w-full min-w-[1040px]">
             <thead>
               <tr class="mb-table-head">
-                <th>When</th>
-                <th>Receipt</th>
-                <th>Branch</th>
-                <th>Customer</th>
-                <th>Service</th>
-                <th>Pay</th>
-                <th>Barber</th>
-                <th class="text-right">Total</th>
+                <th>{{ i18n.t('page.transactions.colWhen') }}</th>
+                <th>{{ i18n.t('page.transactions.colReceipt') }}</th>
+                <th>{{ i18n.t('page.transactions.colBranch') }}</th>
+                <th>{{ i18n.t('page.transactions.colCustomer') }}</th>
+                <th>{{ i18n.t('page.transactions.colService') }}</th>
+                <th>{{ i18n.t('page.transactions.colPay') }}</th>
+                <th>{{ i18n.t('page.transactions.colBarber') }}</th>
+                <th class="text-right">{{ i18n.t('page.transactions.colTotal') }}</th>
                 <th class="w-14"></th>
               </tr>
             </thead>
@@ -121,7 +120,7 @@ import {
               @for (t of paged(); track t.id) {
                 <tr class="mb-table-row cursor-pointer" (click)="openDetail(t)">
                   <td class="mb-table-cell whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
-                    {{ formatDateTime(t.paymentDate) }}
+                    {{ i18n.formatDateTime(t.paymentDate) }}
                   </td>
                   <td class="mb-table-cell font-mono text-xs text-slate-500 dark:text-slate-400">
                     {{ t.receipt?.receiptNumber ?? '—' }}
@@ -137,7 +136,7 @@ import {
                   </td>
                   <td class="mb-table-cell">
                     <mb-badge [tone]="paymentMethodBadgeTone(t.paymentMethod)" [caps]="false">{{
-                      paymentMethodLabel(t.paymentMethod)
+                      i18n.paymentMethodLabel(t.paymentMethod)
                     }}</mb-badge>
                   </td>
                   <td class="mb-table-cell">
@@ -156,7 +155,7 @@ import {
                     }}</span>
                   </td>
                   <td class="mb-table-cell text-right" (click)="$event.stopPropagation()">
-                    <mb-icon-btn [ariaLabel]="'View transaction'" variant="ghost" (click)="openDetail(t)">
+                    <mb-icon-btn [ariaLabel]="i18n.t('page.transactions.viewTxAria')" variant="ghost" (click)="openDetail(t)">
                       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                           stroke-linecap="round"
@@ -186,36 +185,96 @@ import {
               class="w-full rounded-2xl border border-slate-200/80 bg-white p-4 text-left shadow-sm transition active:scale-[0.99] dark:border-slate-700 dark:bg-slate-900/50"
               (click)="openDetail(t)"
             >
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <p class="truncate font-semibold text-slate-900 dark:text-white">{{ t.customerNameSnapshot }}</p>
-                  <p class="text-xs text-slate-500">{{ formatDateTime(t.paymentDate) }}</p>
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <p
+                    class="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500/90 dark:text-slate-500"
+                  >
+                    {{ i18n.t('page.transactions.colCustomer') }}
+                  </p>
+                  <p class="truncate text-[15px] font-semibold leading-snug text-slate-950 dark:text-slate-50">
+                    {{ t.customerNameSnapshot }}
+                  </p>
                 </div>
-                <p class="shrink-0 text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {{ formatUsd(t.totalAmount) }}
-                </p>
+                <div class="shrink-0 text-right">
+                  <p
+                    class="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500/90 dark:text-slate-500"
+                  >
+                    {{ i18n.t('page.transactions.colTotal') }}
+                  </p>
+                  <p class="text-base font-bold tabular-nums leading-none text-emerald-700 dark:text-emerald-400">
+                    {{ formatUsd(t.totalAmount) }}
+                  </p>
+                </div>
               </div>
-              <div class="mt-3 flex flex-wrap items-center gap-2">
-                <mb-badge tone="neutral" [caps]="false">{{ t.branch.code }}</mb-badge>
-                <mb-badge [tone]="paymentMethodBadgeTone(t.paymentMethod)" [caps]="false">{{
-                  paymentMethodLabel(t.paymentMethod)
-                }}</mb-badge>
-                <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
-                  <mb-avatar
-                    [label]="t.barber.displayName"
-                    [photoUrl]="db.resolveBarberProfilePhotoUrl(t.barber.id)"
-                    size="sm"
-                  />
-                  {{ t.barber.displayName }}
-                </span>
+
+              <div class="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span
+                  class="text-[11px] font-medium uppercase tracking-wide text-slate-500/95 dark:text-slate-500"
+                  >{{ i18n.t('page.transactions.colWhen') }}</span
+                >
+                <span class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{
+                  i18n.formatDateTime(t.paymentDate)
+                }}</span>
               </div>
-              <p class="mt-2 font-mono text-[11px] text-slate-400">{{ t.receipt?.receiptNumber }}</p>
+
+              <div
+                class="mt-3 flex flex-wrap gap-x-5 gap-y-2.5 border-t border-slate-100 pt-3 text-xs dark:border-slate-800"
+              >
+                <div class="flex min-w-0 flex-[1_1_44%] items-center gap-2 sm:flex-initial">
+                  <span
+                    class="shrink-0 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-500"
+                    >{{ i18n.t('page.transactions.colBranch') }}</span
+                  >
+                  <mb-badge tone="neutral" class="truncate" [caps]="false">{{ t.branch.code }}</mb-badge>
+                </div>
+                <div class="flex min-w-0 flex-[1_1_44%] items-center gap-2 sm:flex-initial">
+                  <span
+                    class="shrink-0 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-500"
+                    >{{ i18n.t('page.transactions.colPay') }}</span
+                  >
+                  <mb-badge
+                    class="max-w-[min(100%,10rem)] truncate"
+                    [tone]="paymentMethodBadgeTone(t.paymentMethod)"
+                    [caps]="false"
+                    >{{ i18n.paymentMethodLabel(t.paymentMethod) }}</mb-badge
+                  >
+                </div>
+                <div class="flex w-full min-w-0 basis-full items-center gap-2 pt-0.5 sm:basis-auto sm:pt-0">
+                  <span
+                    class="shrink-0 text-[11px] font-medium uppercase tracking-wide text-slate-500 dark:text-slate-500"
+                    >{{ i18n.t('page.transactions.colBarber') }}</span
+                  >
+                  <span
+                    class="inline-flex min-w-0 items-center gap-1.5 text-sm font-semibold text-slate-900 dark:text-slate-100"
+                  >
+                    <mb-avatar
+                      [label]="t.barber.displayName"
+                      [photoUrl]="db.resolveBarberProfilePhotoUrl(t.barber.id)"
+                      size="sm"
+                    />
+                    <span class="truncate">{{ t.barber.displayName }}</span>
+                  </span>
+                </div>
+              </div>
+
+              <div class="mt-2.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+                <span
+                  class="text-[10px] font-medium uppercase tracking-wider text-slate-500/90 dark:text-slate-500"
+                  >{{ i18n.t('page.transactions.colReceipt') }}</span
+                >
+                <span class="font-mono text-[12px] font-semibold text-slate-800 dark:text-slate-100">{{
+                  t.receipt?.receiptNumber ?? '—'
+                }}</span>
+              </div>
             </button>
           }
         </div>
 
         @if (filtered().length === 0) {
-          <p class="px-6 py-12 text-center text-sm text-slate-500">No transactions match your filters.</p>
+          <p class="px-6 py-12 text-center text-sm text-slate-500">
+            {{ i18n.t('page.transactions.emptyFiltered') }}
+          </p>
         }
 
         <mb-table-paginator
@@ -230,8 +289,8 @@ import {
 
     <mb-modal
       [open]="detailOpen()"
-      [title]="selected()?.customerNameSnapshot ?? 'Transaction'"
-      description="Settlement detail · mock receipt preview"
+      [title]="selected()?.customerNameSnapshot ?? i18n.t('page.transactions.detailTitleFallback')"
+      [description]="i18n.t('page.transactions.modalDescPreview')"
       size="xl"
       [footer]="true"
       (backdropClose)="closeDetail()"
@@ -242,40 +301,42 @@ import {
           <div class="space-y-4">
             <div class="flex flex-wrap gap-2">
               <mb-badge tone="info">{{ t.branch.name }}</mb-badge>
-              <mb-badge tone="neutral">{{ paymentMethodLabel(t.paymentMethod) }}</mb-badge>
-              <mb-badge tone="success">{{ formatPct(t.commissionPercentSnapshot) }} barber</mb-badge>
+              <mb-badge tone="neutral">{{ i18n.paymentMethodLabel(t.paymentMethod) }}</mb-badge>
+              <mb-badge tone="success"
+                >{{ formatPct(t.commissionPercentSnapshot) }}{{ i18n.t('page.transactions.barberPctSuffix') }}</mb-badge
+              >
             </div>
             <dl class="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt class="text-slate-500">Service</dt>
+                <dt class="text-slate-500">{{ i18n.t('page.transactions.labelService') }}</dt>
                 <dd class="font-medium text-slate-900 dark:text-white">{{ t.serviceNameSnapshot }}</dd>
               </div>
               <div>
-                <dt class="text-slate-500">Barber</dt>
+                <dt class="text-slate-500">{{ i18n.t('page.transactions.labelBarber') }}</dt>
                 <dd class="font-medium text-slate-900 dark:text-white">{{ t.barber.displayName }}</dd>
               </div>
               <div>
-                <dt class="text-slate-500">Phone</dt>
+                <dt class="text-slate-500">{{ i18n.t('page.transactions.labelPhone') }}</dt>
                 <dd class="font-medium">{{ t.customerPhoneSnapshot ?? '—' }}</dd>
               </div>
               <div>
-                <dt class="text-slate-500">WhatsApp</dt>
+                <dt class="text-slate-500">{{ i18n.t('page.transactions.labelWhatsapp') }}</dt>
                 <dd class="font-medium">{{ t.customerWhatsappSnapshot ?? '—' }}</dd>
               </div>
             </dl>
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
               <div class="flex justify-between text-sm">
-                <span class="text-slate-500">Total</span>
+                <span class="text-slate-500">{{ i18n.t('page.transactions.labelTotal') }}</span>
                 <span class="font-semibold tabular-nums">{{ formatUsd(t.totalAmount) }}</span>
               </div>
               <div class="mt-2 flex justify-between text-sm">
-                <span class="text-slate-500">Barber share</span>
+                <span class="text-slate-500">{{ i18n.t('page.transactions.labelBarberShare') }}</span>
                 <span class="font-medium tabular-nums text-emerald-700 dark:text-emerald-400">
                   {{ formatUsd(t.barberEarning) }}
                 </span>
               </div>
               <div class="mt-1 flex justify-between text-sm">
-                <span class="text-slate-500">Shop share</span>
+                <span class="text-slate-500">{{ i18n.t('page.transactions.labelShopShare') }}</span>
                 <span class="font-medium tabular-nums">{{ formatUsd(t.shopEarning) }}</span>
               </div>
             </div>
@@ -287,41 +348,43 @@ import {
           >
             <div class="flex items-center justify-between border-b border-slate-200 pb-4 dark:border-slate-800">
               <div>
-                <p class="font-display text-lg font-semibold text-slate-900 dark:text-white">Receipt</p>
+                <p class="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                  {{ i18n.t('page.transactions.receiptHeading') }}
+                </p>
                 <p class="text-xs text-slate-500">{{ t.receipt?.receiptNumber }}</p>
               </div>
               <mb-badge tone="success">{{ t.branch.code }}</mb-badge>
             </div>
             <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
-              Thank you,
+              {{ i18n.t('page.transactions.receiptThankYou') }}
               <span class="font-medium text-slate-900 dark:text-white">{{ t.customerNameSnapshot }}</span
               >.
             </p>
-            <p class="mt-2 text-xs text-slate-500">{{ formatDateTime(t.paymentDate) }}</p>
+            <p class="mt-2 text-xs text-slate-500">{{ i18n.formatDateTime(t.paymentDate) }}</p>
             <ul class="mt-6 space-y-2 border-t border-slate-100 pt-4 text-sm dark:border-slate-800">
               <li class="flex justify-between">
                 <span>{{ t.serviceNameSnapshot }}</span>
                 <span class="tabular-nums">{{ formatUsd(t.totalAmount) }}</span>
               </li>
             </ul>
-            <p class="mt-6 text-center text-xs text-slate-400">Mubase Saloon · mock printable preview</p>
+            <p class="mt-6 text-center text-xs text-slate-400">{{ i18n.t('page.transactions.receiptMockFooter') }}</p>
           </div>
         </div>
       }
       <div class="mb-modal-footer-actions flex flex-wrap justify-end gap-2">
         @if (auth.canManageBusiness()) {
-          <mb-btn variant="danger" (click)="askDelete()">Delete (mock)</mb-btn>
+          <mb-btn variant="danger" (click)="askDelete()">{{ i18n.t('page.transactions.deleteMock') }}</mb-btn>
         }
-        <mb-btn variant="secondary" (click)="closeDetail()">Close</mb-btn>
-        <mb-btn (click)="printReceipt()">Print receipt</mb-btn>
+        <mb-btn variant="secondary" (click)="closeDetail()">{{ i18n.t('page.transactions.close') }}</mb-btn>
+        <mb-btn (click)="printReceipt()">{{ i18n.t('page.transactions.printReceipt') }}</mb-btn>
       </div>
     </mb-modal>
 
     <mb-confirm-dialog
       [open]="confirmDelete()"
-      title="Delete this transaction?"
-      message="Removes the row and receipt from the mock ledger."
-      confirmLabel="Delete"
+      [title]="i18n.t('page.transactions.deleteConfirmTitle')"
+      [message]="i18n.t('page.transactions.deleteConfirmMessage')"
+      [confirmLabel]="i18n.t('page.transactions.deleteConfirmLabel')"
       [danger]="true"
       (confirm)="confirmDeleteTx()"
       (cancel)="confirmDelete.set(false)"
@@ -330,13 +393,12 @@ import {
 })
 export class TransactionsPageComponent {
   readonly auth = inject(AuthService);
+  readonly i18n = inject(I18nService);
   readonly db = inject(MockDatabaseService);
   private readonly route = inject(ActivatedRoute);
 
   readonly formatUsd = formatUsd;
-  readonly formatDateTime = formatDateTime;
   readonly formatPct = formatPct;
-  readonly paymentMethodLabel = paymentMethodLabel;
   readonly paymentMethodBadgeTone = paymentMethodBadgeTone;
 
   readonly branchFilter = signal('');
@@ -364,12 +426,12 @@ export class TransactionsPageComponent {
   });
 
   readonly branchFilterOptions = computed(() => [
-    { value: '', label: 'All branches' },
+    { value: '', label: this.i18n.t('page.transactions.filterAllBranches') },
     ...this.branches().map((b) => ({ value: b.id, label: b.name })),
   ]);
 
   readonly barberFilterOptions = computed(() => [
-    { value: '', label: 'All barbers' },
+    { value: '', label: this.i18n.t('page.transactions.filterAllBarbers') },
     ...this.barberOptions().map((bar) => ({ value: bar.id, label: bar.displayName })),
   ]);
 
