@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { CurrencyService } from '../../core/currency/currency.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbLineChartComponent } from '../../shared/charts/mb-line-chart.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -13,7 +12,7 @@ import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.com
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
 import { MbAvatarComponent } from '../../shared/ui/mb-avatar.component';
-import { formatDateTime } from '../../shared/formatters';
+import { formatDateTime, formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -51,13 +50,13 @@ import { formatDateTime } from '../../shared/formatters';
           <mb-stat-card
             icon="revenue"
             label="Your earnings"
-            [value]="currency.format(dash().summary.yourEarnings)"
+            [value]="formatUsd(dash().summary.yourEarnings)"
             [trend]="barberCutTrend()"
           />
           <mb-stat-card
             icon="wallet"
             label="Gross services"
-            [value]="currency.format(dash().summary.grossServiceTotal)"
+            [value]="formatUsd(dash().summary.grossServiceTotal)"
           />
           <mb-stat-card
             icon="activity"
@@ -76,24 +75,24 @@ import { formatDateTime } from '../../shared/formatters';
             variant="violet"
             label="Your sales today"
             [value]="'' + txStats().todayCount"
-            [hint]="currency.format(txStats().todayRevenue) + ' gross'"
+            [hint]="formatUsd(txStats().todayRevenue) + ' gross'"
           />
           <mb-quick-stat-tile
             variant="emerald"
             label="This week"
             [value]="'' + txStats().weekCount"
-            [hint]="currency.format(txStats().weekRevenue)"
+            [hint]="formatUsd(txStats().weekRevenue)"
           />
           <mb-quick-stat-tile
             variant="amber"
             label="This month"
             [value]="'' + txStats().monthCount"
-            [hint]="currency.format(txStats().monthRevenue)"
+            [hint]="formatUsd(txStats().monthRevenue)"
           />
           <mb-quick-stat-tile
             variant="sky"
             label="Your cut (month)"
-            [value]="currency.format(monthBarberCut())"
+            [value]="formatUsd(monthBarberCut())"
           />
         </mb-quick-stats-row>
 
@@ -135,7 +134,7 @@ import { formatDateTime } from '../../shared/formatters';
                       </td>
                       <td class="mb-table-cell text-slate-600 dark:text-slate-400">{{ t.serviceNameSnapshot }}</td>
                       <td class="mb-table-cell text-right text-base font-semibold tabular-nums text-slate-900 dark:text-white">
-                        {{ currency.format(t.barberEarning) }}
+                        {{ formatUsd(t.barberEarning) }}
                       </td>
                     </tr>
                   }
@@ -153,7 +152,7 @@ import { formatDateTime } from '../../shared/formatters';
                       <p class="truncate text-xs text-slate-500">{{ t.serviceNameSnapshot }}</p>
                     </div>
                     <p class="shrink-0 text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                      {{ currency.format(t.barberEarning) }}
+                      {{ formatUsd(t.barberEarning) }}
                     </p>
                   </div>
                   <p class="mt-2 text-xs text-slate-500">{{ formatDateTime(t.paymentDate) }} · {{ t.branch.code }}</p>
@@ -175,10 +174,10 @@ import { formatDateTime } from '../../shared/formatters';
 })
 export class MyDeskPageComponent {
   readonly auth = inject(AuthService);
-  readonly currency = inject(CurrencyService);
   readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
 
+  readonly formatUsd = formatUsd;
   readonly formatDateTime = formatDateTime;
 
   readonly pageIndex = signal(0);

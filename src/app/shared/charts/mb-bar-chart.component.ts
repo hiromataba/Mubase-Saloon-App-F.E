@@ -9,7 +9,6 @@ import {
   input,
 } from '@angular/core';
 import { Chart, registerables, type ChartConfiguration } from 'chart.js';
-import { CurrencyService } from '../../core/currency/currency.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { chartAxisColor, chartFillSequence, chartGridColor, chartTooltipStyle } from './chart-palette';
 
@@ -27,7 +26,6 @@ export class MbBarChartComponent implements AfterViewInit, OnDestroy {
   readonly values = input.required<number[]>();
 
   private readonly theme = inject(ThemeService);
-  private readonly currency = inject(CurrencyService);
   private chart?: Chart;
   private viewReady = false;
 
@@ -36,7 +34,6 @@ export class MbBarChartComponent implements AfterViewInit, OnDestroy {
       this.labels();
       this.values();
       this.theme.preference();
-      this.currency.displayCurrency();
       this.render();
     });
   }
@@ -92,9 +89,6 @@ export class MbBarChartComponent implements AfterViewInit, OnDestroy {
             padding: 12,
             displayColors: false,
             cornerRadius: 10,
-            callbacks: {
-              label: (ctx) => this.currency.format(Number(ctx.parsed.y)),
-            },
           },
         },
         scales: {

@@ -3,7 +3,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { CurrencyService } from '../../core/currency/currency.service';
 import type { TransactionListItem } from '../../data/models/domain.types';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { summarizeTransactionsByPeriod } from '../../shared/stats/transaction-period-stats';
@@ -21,6 +20,7 @@ import { MbIconButtonComponent } from '../../shared/ui/mb-icon-button.component'
 import {
   formatDateTime,
   formatPct,
+  formatUsd,
   paymentMethodBadgeTone,
   paymentMethodLabel,
 } from '../../shared/formatters';
@@ -79,24 +79,24 @@ import {
           variant="violet"
           label="Today"
           [value]="'' + txStats().todayCount"
-          [hint]="currency.format(txStats().todayRevenue) + ' · filtered list'"
+          [hint]="formatUsd(txStats().todayRevenue) + ' · filtered list'"
         />
         <mb-quick-stat-tile
           variant="emerald"
           label="This week"
           [value]="'' + txStats().weekCount"
-          [hint]="currency.format(txStats().weekRevenue)"
+          [hint]="formatUsd(txStats().weekRevenue)"
         />
         <mb-quick-stat-tile
           variant="amber"
           label="This month"
           [value]="'' + txStats().monthCount"
-          [hint]="currency.format(txStats().monthRevenue)"
+          [hint]="formatUsd(txStats().monthRevenue)"
         />
         <mb-quick-stat-tile
           variant="sky"
           label="Filtered total"
-          [value]="currency.format(filteredRevenue())"
+          [value]="formatUsd(filteredRevenue())"
           [hint]="filtered().length + ' sales'"
         />
       </mb-quick-stats-row>
@@ -152,7 +152,7 @@ import {
                   </td>
                   <td class="mb-table-cell text-right">
                     <span class="text-base font-semibold tabular-nums text-slate-900 dark:text-white">{{
-                      currency.format(t.totalAmount)
+                      formatUsd(t.totalAmount)
                     }}</span>
                   </td>
                   <td class="mb-table-cell text-right" (click)="$event.stopPropagation()">
@@ -192,7 +192,7 @@ import {
                   <p class="text-xs text-slate-500">{{ formatDateTime(t.paymentDate) }}</p>
                 </div>
                 <p class="shrink-0 text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {{ currency.format(t.totalAmount) }}
+                  {{ formatUsd(t.totalAmount) }}
                 </p>
               </div>
               <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -266,17 +266,17 @@ import {
             <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40">
               <div class="flex justify-between text-sm">
                 <span class="text-slate-500">Total</span>
-                <span class="font-semibold tabular-nums">{{ currency.format(t.totalAmount) }}</span>
+                <span class="font-semibold tabular-nums">{{ formatUsd(t.totalAmount) }}</span>
               </div>
               <div class="mt-2 flex justify-between text-sm">
                 <span class="text-slate-500">Barber share</span>
                 <span class="font-medium tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {{ currency.format(t.barberEarning) }}
+                  {{ formatUsd(t.barberEarning) }}
                 </span>
               </div>
               <div class="mt-1 flex justify-between text-sm">
                 <span class="text-slate-500">Shop share</span>
-                <span class="font-medium tabular-nums">{{ currency.format(t.shopEarning) }}</span>
+                <span class="font-medium tabular-nums">{{ formatUsd(t.shopEarning) }}</span>
               </div>
             </div>
           </div>
@@ -301,7 +301,7 @@ import {
             <ul class="mt-6 space-y-2 border-t border-slate-100 pt-4 text-sm dark:border-slate-800">
               <li class="flex justify-between">
                 <span>{{ t.serviceNameSnapshot }}</span>
-                <span class="tabular-nums">{{ currency.format(t.totalAmount) }}</span>
+                <span class="tabular-nums">{{ formatUsd(t.totalAmount) }}</span>
               </li>
             </ul>
             <p class="mt-6 text-center text-xs text-slate-400">Mubase Saloon · mock printable preview</p>
@@ -330,9 +330,10 @@ import {
 })
 export class TransactionsPageComponent {
   readonly auth = inject(AuthService);
-  readonly currency = inject(CurrencyService);
   readonly db = inject(MockDatabaseService);
   private readonly route = inject(ActivatedRoute);
+
+  readonly formatUsd = formatUsd;
   readonly formatDateTime = formatDateTime;
   readonly formatPct = formatPct;
   readonly paymentMethodLabel = paymentMethodLabel;

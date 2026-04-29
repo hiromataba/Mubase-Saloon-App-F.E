@@ -4,7 +4,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { BarberProfile, OwnerDashboardBarberRow } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
-import { CurrencyService } from '../../core/currency/currency.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -18,7 +17,7 @@ import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.com
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-select.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
-import { formatPct } from '../../shared/formatters';
+import { formatPct, formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -65,12 +64,12 @@ import { formatPct } from '../../shared/formatters';
         <mb-quick-stat-tile
           variant="amber"
           label="Gross services"
-          [value]="currency.format(barberStats().gross)"
+          [value]="formatUsd(barberStats().gross)"
         />
         <mb-quick-stat-tile
           variant="sky"
           label="Barber payouts"
-          [value]="currency.format(barberStats().earned)"
+          [value]="formatUsd(barberStats().earned)"
         />
       </mb-quick-stats-row>
 
@@ -112,10 +111,10 @@ import { formatPct } from '../../shared/formatters';
                     {{ row.servicesCount }}
                   </td>
                   <td class="mb-table-cell text-right tabular-nums text-slate-700 dark:text-slate-300">
-                    {{ currency.format(row.revenue) }}
+                    {{ formatUsd(row.revenue) }}
                   </td>
                   <td class="mb-table-cell text-right text-base font-semibold tabular-nums text-slate-900 dark:text-white">
-                    {{ currency.format(row.barberEarnings) }}
+                    {{ formatUsd(row.barberEarnings) }}
                   </td>
                   <td class="mb-table-cell">
                     <mb-badge [tone]="row.barber.isActive ? 'success' : 'neutral'" [caps]="false">
@@ -163,12 +162,12 @@ import { formatPct } from '../../shared/formatters';
                 </div>
                 <div>
                   <dt class="text-slate-500">Gross</dt>
-                  <dd class="font-semibold tabular-nums">{{ currency.format(row.revenue) }}</dd>
+                  <dd class="font-semibold tabular-nums">{{ formatUsd(row.revenue) }}</dd>
                 </div>
                 <div>
                   <dt class="text-slate-500">Earned</dt>
                   <dd class="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {{ currency.format(row.barberEarnings) }}
+                    {{ formatUsd(row.barberEarnings) }}
                   </dd>
                 </div>
               </dl>
@@ -239,12 +238,12 @@ import { formatPct } from '../../shared/formatters';
 })
 export class BarbersPageComponent {
   readonly auth = inject(AuthService);
-  readonly currency = inject(CurrencyService);
   readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
 
+  readonly formatUsd = formatUsd;
   readonly formatPct = formatPct;
 
   readonly query = signal('');

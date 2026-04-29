@@ -1,7 +1,6 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { CurrencyService } from '../../core/currency/currency.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { NewSaleModalService } from '../operations/new-sale-modal.service';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -11,7 +10,7 @@ import { summarizeTransactionsByPeriod } from '../../shared/stats/transaction-pe
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
-import { formatDateTime } from '../../shared/formatters';
+import { formatDateTime, formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -61,21 +60,21 @@ import { formatDateTime } from '../../shared/formatters';
           variant="violet"
           label="Today"
           [value]="'' + txStats().todayCount"
-          [hint]="currency.format(txStats().todayRevenue)"
+          [hint]="formatUsd(txStats().todayRevenue)"
         />
         <mb-quick-stat-tile
           variant="emerald"
           label="This week"
           [value]="'' + txStats().weekCount"
-          [hint]="currency.format(txStats().weekRevenue)"
+          [hint]="formatUsd(txStats().weekRevenue)"
         />
         <mb-quick-stat-tile
           variant="amber"
           label="This month"
           [value]="'' + txStats().monthCount"
-          [hint]="currency.format(txStats().monthRevenue)"
+          [hint]="formatUsd(txStats().monthRevenue)"
         />
-        <mb-quick-stat-tile variant="sky" label="All time" [value]="'' + scopedCount()" [hint]="currency.format(scopedRevenue())" />
+        <mb-quick-stat-tile variant="sky" label="All time" [value]="'' + scopedCount()" [hint]="formatUsd(scopedRevenue())" />
       </mb-quick-stats-row>
 
       <mb-card title="Recent sales" subtitle="Newest first · paginated" [padding]="false">
@@ -92,7 +91,7 @@ import { formatDateTime } from '../../shared/formatters';
                   </p>
                 </div>
                 <p class="shrink-0 text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {{ currency.format(t.totalAmount) }}
+                  {{ formatUsd(t.totalAmount) }}
                 </p>
               </li>
             }
@@ -120,9 +119,10 @@ import { formatDateTime } from '../../shared/formatters';
 })
 export class AccountantDeskPageComponent {
   readonly auth = inject(AuthService);
-  readonly currency = inject(CurrencyService);
   private readonly db = inject(MockDatabaseService);
   readonly saleModal = inject(NewSaleModalService);
+
+  readonly formatUsd = formatUsd;
   readonly formatDateTime = formatDateTime;
 
   readonly pageIndex = signal(0);

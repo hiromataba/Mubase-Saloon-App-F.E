@@ -1,11 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { CurrencyService } from '../../core/currency/currency.service';
 import type { TransactionListItem } from '../../data/models/domain.types';
 import { MbButtonComponent } from '../../shared/ui/mb-button.component';
 import { MbCardComponent } from '../../shared/ui/mb-card.component';
-import { formatDateTime } from '../../shared/formatters';
+import { formatDateTime, formatUsd } from '../../shared/formatters';
 import { NewSaleFormComponent } from './new-sale-form.component';
 
 @Component({
@@ -32,7 +31,7 @@ import { NewSaleFormComponent } from './new-sale-form.component';
               </p>
             </div>
             <p class="text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-              {{ currency.format(row.totalAmount) }}
+              {{ formatUsd(row.totalAmount) }}
             </p>
           </div>
         </mb-card>
@@ -44,8 +43,9 @@ import { NewSaleFormComponent } from './new-sale-form.component';
 })
 export class OperationsPageComponent implements OnInit {
   readonly auth = inject(AuthService);
-  readonly currency = inject(CurrencyService);
   private readonly router = inject(Router);
+
+  readonly formatUsd = formatUsd;
   readonly formatDateTime = formatDateTime;
   readonly last = signal<TransactionListItem | null>(null);
 

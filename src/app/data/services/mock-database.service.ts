@@ -505,7 +505,6 @@ export class MockDatabaseService {
       name: input.name,
       description: input.description ?? null,
       basePrice: input.basePrice,
-      priceCurrency: input.priceCurrency ?? 'USD',
       durationMin: input.durationMin ?? null,
       isActive: input.isActive,
     };

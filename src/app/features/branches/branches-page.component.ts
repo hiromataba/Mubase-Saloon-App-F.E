@@ -4,7 +4,6 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import type { Branch, BranchStaffRole } from '../../data/models/domain.types';
 import { AuthService } from '../../core/auth/auth.service';
-import { CurrencyService } from '../../core/currency/currency.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
 import { MbBadgeComponent } from '../../shared/ui/mb-badge.component';
@@ -17,6 +16,8 @@ import { MbPhoneInputComponent } from '../../shared/ui/mb-phone-input.component'
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-select.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
+import { formatUsd } from '../../shared/formatters';
+
 @Component({
   standalone: true,
   selector: 'app-branches-page',
@@ -52,7 +53,7 @@ import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.com
         <mb-quick-stat-tile
           variant="amber"
           label="Revenue"
-          [value]="currency.format(branchPortfolioStats().revenue)"
+          [value]="formatUsd(branchPortfolioStats().revenue)"
         />
         <mb-quick-stat-tile variant="sky" label="Transactions" [value]="'' + branchPortfolioStats().tx" />
       </mb-quick-stats-row>
@@ -83,13 +84,13 @@ import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.com
                 <div>
                   <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Revenue</dt>
                   <dd class="mt-1 font-semibold tabular-nums text-slate-900 dark:text-white">
-                    {{ currency.format(row.revenue) }}
+                    {{ formatUsd(row.revenue) }}
                   </dd>
                 </div>
                 <div>
                   <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Shop</dt>
                   <dd class="mt-1 font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                    {{ currency.format(row.shopEarnings) }}
+                    {{ formatUsd(row.shopEarnings) }}
                   </dd>
                 </div>
                 <div>
@@ -240,7 +241,6 @@ import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.com
 })
 export class BranchesPageComponent {
   readonly auth = inject(AuthService);
-  readonly currency = inject(CurrencyService);
   private readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -248,6 +248,8 @@ export class BranchesPageComponent {
 
   /** Re-compute assignable users when role changes (same person can be manager + accountant). */
   private readonly assignRoleBump = signal(0);
+
+  readonly formatUsd = formatUsd;
 
   readonly rows = computed(() => {
     const u = this.auth.currentUser();

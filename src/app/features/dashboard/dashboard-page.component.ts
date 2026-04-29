@@ -15,8 +15,7 @@ import { summarizeTransactionsByPeriod } from '../../shared/stats/transaction-pe
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
-import { CurrencyService } from '../../core/currency/currency.service';
-import { formatDateTime } from '../../shared/formatters';
+import { formatDateTime, formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -64,19 +63,19 @@ import { formatDateTime } from '../../shared/formatters';
         <mb-stat-card
           icon="revenue"
           label="Gross revenue"
-          [value]="currency.format(ownerView().totals.revenue)"
+          [value]="formatUsd(ownerView().totals.revenue)"
           [trend]="revenueStatTrend()"
         />
         <mb-stat-card
           icon="wallet"
           label="Shop share"
-          [value]="currency.format(ownerView().totals.shopEarnings)"
+          [value]="formatUsd(ownerView().totals.shopEarnings)"
           hint="After barber commissions"
         />
         <mb-stat-card
           icon="team"
           label="Barber payouts"
-          [value]="currency.format(ownerView().totals.barberEarnings)"
+          [value]="formatUsd(ownerView().totals.barberEarnings)"
         />
         <mb-stat-card
           icon="activity"
@@ -110,9 +109,9 @@ import { formatDateTime } from '../../shared/formatters';
               <mb-quick-stat-tile
                 variant="emerald"
                 label="Revenue"
-                [value]="currency.format(branchTableStats().revenue)"
+                [value]="formatUsd(branchTableStats().revenue)"
               />
-              <mb-quick-stat-tile variant="amber" label="Shop share" [value]="currency.format(branchTableStats().shop)" />
+              <mb-quick-stat-tile variant="amber" label="Shop share" [value]="formatUsd(branchTableStats().shop)" />
               <mb-quick-stat-tile variant="sky" label="Transactions" [value]="'' + branchTableStats().tx" />
             </mb-quick-stats-row>
           </div>
@@ -136,10 +135,10 @@ import { formatDateTime } from '../../shared/formatters';
                       </div>
                     </td>
                     <td class="mb-table-cell text-right tabular-nums text-slate-700 dark:text-slate-300">
-                      {{ currency.format(row.revenue) }}
+                      {{ formatUsd(row.revenue) }}
                     </td>
                     <td class="mb-table-cell text-right tabular-nums text-slate-900 dark:text-white">
-                      {{ currency.format(row.shopEarnings) }}
+                      {{ formatUsd(row.shopEarnings) }}
                     </td>
                     <td class="mb-table-cell text-right tabular-nums font-medium">{{ row.transactionCount }}</td>
                   </tr>
@@ -159,11 +158,11 @@ import { formatDateTime } from '../../shared/formatters';
                 <dl class="mt-4 space-y-2.5 text-sm">
                   <div class="flex items-baseline justify-between gap-3">
                     <dt class="shrink-0 text-mb-text-secondary">Revenue</dt>
-                    <dd class="text-right font-semibold tabular-nums text-mb-text-primary">{{ currency.format(row.revenue) }}</dd>
+                    <dd class="text-right font-semibold tabular-nums text-mb-text-primary">{{ formatUsd(row.revenue) }}</dd>
                   </div>
                   <div class="flex items-baseline justify-between gap-3">
                     <dt class="shrink-0 text-mb-text-secondary">Shop</dt>
-                    <dd class="text-right font-semibold tabular-nums text-mb-primary">{{ currency.format(row.shopEarnings) }}</dd>
+                    <dd class="text-right font-semibold tabular-nums text-mb-primary">{{ formatUsd(row.shopEarnings) }}</dd>
                   </div>
                   <div class="flex items-baseline justify-between gap-3">
                     <dt class="shrink-0 text-mb-text-secondary">Transactions</dt>
@@ -209,7 +208,7 @@ import { formatDateTime } from '../../shared/formatters';
                   <p
                     class="min-w-0 max-w-full truncate text-right text-base font-semibold tabular-nums text-mb-text-primary md:max-w-none md:shrink-0 md:text-sm lg:text-base"
                   >
-                    {{ currency.format(row.revenue) }}
+                    {{ formatUsd(row.revenue) }}
                   </p>
                 </div>
               </li>
@@ -303,12 +302,12 @@ import { formatDateTime } from '../../shared/formatters';
               <mb-quick-stat-tile
                 variant="emerald"
                 label="Volume"
-                [value]="currency.format(pulseVolume())"
+                [value]="formatUsd(pulseVolume())"
               />
               <mb-quick-stat-tile
                 variant="amber"
                 label="Avg ticket"
-                [value]="currency.format(pulseAvgTicket())"
+                [value]="formatUsd(pulseAvgTicket())"
               />
               <mb-quick-stat-tile variant="sky" label="Today" [value]="'' + pulsePeriodStats().todayCount" />
             </mb-quick-stats-row>
@@ -354,7 +353,7 @@ import { formatDateTime } from '../../shared/formatters';
                       </div>
                     </td>
                     <td class="mb-table-cell text-right text-base font-semibold tabular-nums text-slate-900 dark:text-white">
-                      {{ currency.format(t.totalAmount) }}
+                      {{ formatUsd(t.totalAmount) }}
                     </td>
                   </tr>
                 }
@@ -381,7 +380,7 @@ import { formatDateTime } from '../../shared/formatters';
                     <p class="mt-2 text-xs text-mb-text-secondary">{{ formatDateTime(t.paymentDate) }}</p>
                   </div>
                   <p class="shrink-0 text-base font-semibold tabular-nums text-mb-text-primary">
-                    {{ currency.format(t.totalAmount) }}
+                    {{ formatUsd(t.totalAmount) }}
                   </p>
                 </div>
                 <div class="mt-4 border-t border-mb-border pt-3">
@@ -416,11 +415,11 @@ import { formatDateTime } from '../../shared/formatters';
 })
 export class DashboardPageComponent {
   readonly auth = inject(AuthService);
-  readonly currency = inject(CurrencyService);
   readonly db = inject(MockDatabaseService);
   private readonly router = inject(Router);
   readonly saleModal = inject(NewSaleModalService);
 
+  readonly formatUsd = formatUsd;
   readonly formatDateTime = formatDateTime;
 
   readonly branchPageIndex = signal(0);
