@@ -5,6 +5,7 @@ import {
   ElementRef,
   forwardRef,
   HostListener,
+  booleanAttribute,
   computed,
   inject,
   input,
@@ -79,8 +80,23 @@ let mbSelectUid = 0;
           [attr.aria-labelledby]="triggerId"
           (click)="$event.stopPropagation()"
         >
-          <div class="min-h-0 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
-            @for (opt of options(); track opt.value) {
+          @if (searchable()) {
+            <div class="shrink-0 border-b border-mb-border px-2 pb-2 pt-1">
+              <input
+                #searchInPanel
+                type="search"
+                class="mb-input w-full"
+                [value]="searchQuery()"
+                (input)="onSearchInput($event)"
+                [placeholder]="searchPlaceholder()"
+                [attr.aria-label]="searchAria()"
+                autocomplete="off"
+                autocorrect="off"
+              />
+            </div>
+          }
+          <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+            @for (opt of filteredOptions(); track opt.value) {
               <button
                 type="button"
                 role="option"
@@ -103,6 +119,9 @@ let mbSelectUid = 0;
                 }
               </button>
             }
+            @if (searchable() && filteredOptions().length === 0) {
+              <p class="px-4 py-6 text-center text-xs text-mb-text-secondary">{{ emptySearchHint() }}</p>
+            }
           </div>
         </div>
       }
@@ -117,12 +136,19 @@ export class MbSelectComponent implements ControlValueAccessor {
   readonly placeholder = input<string>('Select…');
   /** Extra classes for the trigger (e.g. compact height). */
   readonly triggerClass = input<string>('');
+  /** Adds a search box at the top of the panel (filter by label / value), like the country picker in the phone field. */
+  readonly searchable = input(false, { transform: booleanAttribute });
+  readonly searchPlaceholder = input('Search…');
+  readonly searchAria = input('Filter list');
+  readonly emptySearchHint = input('No matches');
 
   readonly triggerRef = viewChild<ElementRef<HTMLButtonElement>>('trigger');
+  private readonly searchInputRef = viewChild<ElementRef<HTMLInputElement>>('searchInPanel');
 
   readonly valueSig = signal<string>('');
   readonly open = signal(false);
   readonly disabled = signal(false);
+  readonly searchQuery = signal('');
 
   readonly panelTop = signal(0);
   readonly panelLeft = signal(0);
@@ -145,6 +171,22 @@ export class MbSelectComponent implements ControlValueAccessor {
       return opt.label;
     }
     return this.placeholder();
+  });
+
+  readonly filteredOptions = computed(() => {
+    const opts = this.options();
+    if (!this.searchable()) {
+      return opts;
+    }
+    const q = this.searchQuery().trim().toLowerCase();
+    if (!q) {
+      return opts;
+    }
+    return opts.filter(
+      (o) =>
+        o.label.toLowerCase().includes(q) ||
+        (o.value !== '' && o.value.toLowerCase().includes(q)),
+    );
   });
 
   readonly triggerClasses = computed(() => {
@@ -229,9 +271,20 @@ export class MbSelectComponent implements ControlValueAccessor {
     if (this.open()) {
       this.close();
     } else {
+      this.searchQuery.set('');
       this.open.set(true);
-      queueMicrotask(() => this.syncPanelPosition());
+      queueMicrotask(() => {
+        this.syncPanelPosition();
+        if (this.searchable()) {
+          setTimeout(() => this.searchInputRef()?.nativeElement?.focus(), 0);
+        }
+      });
     }
+  }
+
+  onSearchInput(ev: Event): void {
+    const v = (ev.target as HTMLInputElement).value;
+    this.searchQuery.set(v ?? '');
   }
 
   choose(value: string): void {
@@ -274,7 +327,7 @@ export class MbSelectComponent implements ControlValueAccessor {
     }
     const r = btn.getBoundingClientRect();
     const margin = 10;
-    const preferredMax = 320;
+    const preferredBase = this.searchable() ? 360 : 320;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
@@ -294,7 +347,7 @@ export class MbSelectComponent implements ControlValueAccessor {
     const openDown = spaceBelow >= 140 || spaceBelow >= spaceAbove;
     this.panelOpenDownward.set(openDown);
 
-    let maxH = Math.min(preferredMax, openDown ? spaceBelow - gapDetached : spaceAbove - gapDetached);
+    let maxH = Math.min(preferredBase, openDown ? spaceBelow - gapDetached : spaceAbove - gapDetached);
     let top: number;
     if (openDown) {
       top = Math.round(r.bottom);

@@ -68,7 +68,7 @@ export class AuthService {
       delay(280),
       switchMap(() => {
         const mockUser = this.db.findUserByEmail(email);
-        if (!mockUser || !mockUser.isActive || password.length < 8) {
+        if (!mockUser || !mockUser.isActive || !this.db.verifyLoginPassword(mockUser.id, password)) {
           return throwError(() => new Error('Invalid credentials'));
         }
         const session = this.db.buildSessionFromUser(mockUser);

@@ -259,24 +259,23 @@ export const MOCK_SERVICES: Service[] = [
   },
 ];
 
-const CUST = (id: string, branchId: string, fullName: string, phone: string, whatsapp: string): Customer => ({
+const CUST = (id: string, fullName: string, phone: string, whatsapp: string): Customer => ({
   id,
-  branchId,
   fullName,
   phone,
   whatsapp,
 });
 
 export const MOCK_CUSTOMERS: Customer[] = [
-  CUST('cu-dt-1', 'br-downtown', 'James Porter', '+15553001001', '+15553001001'),
-  CUST('cu-dt-2', 'br-downtown', 'Ethan Walsh', '+15553001002', ''),
-  CUST('cu-dt-3', 'br-downtown', 'Ryan Cole', '+15553001003', '+15553001003'),
-  CUST('cu-ws-1', 'br-westside', 'Chris Ibarra', '+15553002001', '+15553002001'),
-  CUST('cu-ws-2', 'br-westside', 'Kevin Shah', '+15553002002', ''),
-  CUST('cu-hv-1', 'br-harbor', 'Omar Haddad', '+15553003001', '+15553003001'),
-  CUST('cu-hv-2', 'br-harbor', 'Leo Martin', '+15553003002', ''),
-  CUST('cu-mid-1', 'br-midtown', 'Priya Desai', '+15553004001', '+15553004001'),
-  CUST('cu-mid-2', 'br-midtown', 'Noah Berg', '+15553004002', ''),
+  CUST('cu-dt-1', 'James Porter', '+15553001001', '+15553001001'),
+  CUST('cu-dt-2', 'Ethan Walsh', '+15553001002', ''),
+  CUST('cu-dt-3', 'Ryan Cole', '+15553001003', '+15553001003'),
+  CUST('cu-ws-1', 'Chris Ibarra', '+15553002001', '+15553002001'),
+  CUST('cu-ws-2', 'Kevin Shah', '+15553002002', ''),
+  CUST('cu-hv-1', 'Omar Haddad', '+15553003001', '+15553003001'),
+  CUST('cu-hv-2', 'Leo Martin', '+15553003002', ''),
+  CUST('cu-mid-1', 'Priya Desai', '+15553004001', '+15553004001'),
+  CUST('cu-mid-2', 'Noah Berg', '+15553004002', ''),
 ];
 
 interface TxSpec {
@@ -643,5 +642,9 @@ const built = buildTransactionsAndReceipts();
 export const MOCK_TRANSACTIONS: Transaction[] = built.transactions;
 export const MOCK_RECEIPTS: Receipt[] = built.receipts;
 
-/** Demo passwords are not used — login matches user by email only in mock auth. */
-export const MOCK_DEMO_PASSWORD_HINT = 'Any password ≥8 characters works in demo mode.';
+/** Default login for seeded mock users — set on startup in MockDatabaseService. */
+export const MOCK_SEED_LOGIN_PASSWORD = 'MubaseDemo2024!';
+
+/** Shown near login/settings; new users use the password you assign when inviting or creating accounts. */
+export const MOCK_DEMO_PASSWORD_HINT =
+  `Seeded demo accounts use password "${MOCK_SEED_LOGIN_PASSWORD}". Accounts you create must use ≥8 chars (the password you set).`;

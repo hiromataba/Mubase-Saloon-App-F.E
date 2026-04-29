@@ -24,6 +24,7 @@ import {
   MOCK_SERVICES,
   MOCK_TRANSACTIONS,
   MOCK_USERS,
+  MOCK_SEED_LOGIN_PASSWORD,
 } from '../mock/mock-seed';
 import { splitEarnings } from '../mock/earnings.util';
 import { bundledAvatarUrl } from '../../shared/display/avatar-url.util';
@@ -45,6 +46,8 @@ export class MockDatabaseService {
   private readonly branchStaffState = signal<BranchStaff[]>(structuredClone(MOCK_BRANCH_STAFF));
 
   private readonly receiptSeqByBranch = signal<Record<string, number>>(this.initReceiptSeq());
+  /** Mock-only plaintext passwords keyed by user id (real API hashes server-side). */
+  private readonly userPasswordById = signal<Record<string, string>>({});
 
   readonly branches = this.branchesState.asReadonly();
   readonly transactions = this.transactionsState.asReadonly();
@@ -62,6 +65,14 @@ export class MockDatabaseService {
       m[r.branchId] = Math.max(m[r.branchId] ?? 0, n);
     }
     return m;
+  }
+
+  constructor() {
+    const map: Record<string, string> = {};
+    for (const u of MOCK_USERS) {
+      map[u.id] = MOCK_SEED_LOGIN_PASSWORD;
+    }
+    this.userPasswordById.set(map);
   }
 
   getUserById(id: string): User | undefined {
@@ -100,6 +111,33 @@ export class MockDatabaseService {
   findUserByEmail(email: string): User | undefined {
     const normalized = email.trim().toLowerCase();
     return this.usersState().find((u) => u.email.toLowerCase() === normalized);
+  }
+
+  /** True if email is held by someone other than `exceptUserId` (includes undefined = any user). */
+  isEmailTaken(email: string, exceptUserId?: string): boolean {
+    const normalized = email.trim().toLowerCase();
+    return this.usersState().some((u) => u.email.toLowerCase() === normalized && u.id !== exceptUserId);
+  }
+
+  /**
+   * Mock login credential check — passwords are stored locally for demo only (replace with JWT + API hash).
+   */
+  verifyLoginPassword(userId: string, password: string): boolean {
+    const p = password.trim();
+    if (p.length < 8) {
+      return false;
+    }
+    const expected = this.userPasswordById()[userId];
+    return expected !== undefined && expected !== '' && expected === p;
+  }
+
+  /** Set/replace login password for a mock user */
+  setLoginPassword(userId: string, password: string): void {
+    const p = password.trim();
+    if (p.length < 8) {
+      throw new Error('Password must be at least 8 characters.');
+    }
+    this.userPasswordById.update((m) => ({ ...m, [userId]: p }));
   }
 
   /** Builds session from current mock state (staff + barber links stay in sync with CRUD). */
@@ -196,8 +234,23 @@ export class MockDatabaseService {
       .sort((a, b) => a.branch.name.localeCompare(b.branch.name) || a.user.fullName.localeCompare(b.user.fullName));
   }
 
-  listCustomersForBranch(branchId: string): Customer[] {
-    return this.customersState().filter((c) => c.branchId === branchId);
+  /** All salon customers (shared across branches). */
+  listCustomers(): Customer[] {
+    return [...this.customersState()].sort((a, b) => a.fullName.localeCompare(b.fullName));
+  }
+
+  /** Branches where this customer has at least one recorded sale (for directory UI). */
+  branchesVisitedByCustomer(customerId: string): Branch[] {
+    const ids = new Set<string>();
+    for (const t of this.transactionsState()) {
+      if (t.customerId === customerId) {
+        ids.add(t.branchId);
+      }
+    }
+    return [...ids]
+      .map((id) => this.getBranch(id))
+      .filter((b): b is Branch => !!b)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }
 
   getBarber(id: string): BarberProfile | undefined {
@@ -346,6 +399,7 @@ export class MockDatabaseService {
     commissionPercent: number;
     paymentMethod: Transaction['paymentMethod'];
     recordedByUserId: string;
+    notes?: string | null;
   }): TransactionListItem {
     const id = `tx-${crypto.randomUUID().slice(0, 8)}`;
     const { barberEarning, shopEarning } = splitEarnings(input.totalAmount, input.commissionPercent);
@@ -367,7 +421,7 @@ export class MockDatabaseService {
       shopEarning,
       paymentMethod: input.paymentMethod,
       paymentDate,
-      notes: null,
+      notes: input.notes?.trim() ? input.notes.trim() : null,
       recordedByUserId: input.recordedByUserId,
     };
     const receipt: Receipt = {
@@ -428,7 +482,7 @@ export class MockDatabaseService {
 
   // --- CRUD: users + barbers ---
 
-  createUser(input: Omit<User, 'id'> & { id?: string }): User {
+  createUser(input: Omit<User, 'id'> & { id?: string; password?: string }): User {
     const id = input.id ?? `usr-${crypto.randomUUID().slice(0, 8)}`;
     const row: User = {
       id,
@@ -440,6 +494,10 @@ export class MockDatabaseService {
       isActive: input.isActive,
     };
     this.usersState.update((a) => [...a, row]);
+    const pwd = input.password?.trim();
+    if (pwd && pwd.length >= 8) {
+      this.setLoginPassword(row.id, pwd);
+    }
     return row;
   }
 
@@ -471,10 +529,11 @@ export class MockDatabaseService {
     this.updateBarberProfile(id, { isActive });
   }
 
-  /** Creates demo user + barber profile in one step (mock “create account”). */
+  /** Creates demo user + barber profile in one step (mock “create account”). Requires initial password ≥8 chars. */
   createBarberAccount(input: {
     email: string;
     fullName: string;
+    password: string;
     branchId: string;
     displayName: string;
     commissionPercent: number;
@@ -482,6 +541,7 @@ export class MockDatabaseService {
     const user = this.createUser({
       email: input.email,
       fullName: input.fullName,
+      password: input.password.trim(),
       isOwner: false,
       isActive: true,
     });
@@ -526,7 +586,6 @@ export class MockDatabaseService {
     const id = input.id ?? `cu-${crypto.randomUUID().slice(0, 8)}`;
     const row: Customer = {
       id,
-      branchId: input.branchId,
       fullName: input.fullName,
       phone: input.phone ?? null,
       whatsapp: input.whatsapp ?? null,
@@ -688,6 +747,14 @@ export class MockDatabaseService {
     return txs.reduce((latest, t) =>
       new Date(t.paymentDate) > new Date(latest) ? t.paymentDate : latest,
     txs[0].paymentDate);
+  }
+
+  /** Recorded sale history for a customer (for CRM visits modal); newest first. */
+  listTransactionsForCustomer(customerId: string): TransactionListItem[] {
+    return [...this.transactionsState()]
+      .filter((t) => t.customerId === customerId)
+      .sort((a, b) => new Date(b.paymentDate).getTime() - new Date(a.paymentDate).getTime())
+      .map((t) => this.enrichTransaction(t));
   }
 
   readonly barberEarningsByProfile = computed(() => {

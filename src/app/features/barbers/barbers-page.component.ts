@@ -197,12 +197,37 @@ import { formatPct, formatUsd } from '../../shared/formatters';
       (closeClick)="closeForm()"
     >
       <form class="space-y-4" [formGroup]="barberForm" (ngSubmit)="saveBarber()">
+        @if (formError()) {
+          <p class="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">{{ formError() }}</p>
+        }
         @if (creating()) {
           <mb-field [label]="i18n.t('page.barbers.fieldWorkEmail')" [hint]="i18n.t('page.barbers.fieldWorkEmailHint')">
             <input type="email" class="mb-input" formControlName="email" autocomplete="off" />
           </mb-field>
           <mb-field [label]="i18n.t('page.barbers.fieldFullName')">
             <input class="mb-input" formControlName="fullName" />
+          </mb-field>
+          <mb-field [label]="i18n.t('page.barbers.fieldPasswordCreate')">
+            <input type="password" class="mb-input" formControlName="password" autocomplete="new-password" />
+          </mb-field>
+          <mb-field [label]="i18n.t('page.barbers.fieldPasswordConfirm')">
+            <input type="password" class="mb-input" formControlName="passwordConfirm" autocomplete="new-password" />
+          </mb-field>
+        } @else {
+          <p class="text-xs font-semibold uppercase tracking-wide text-mb-text-secondary">
+            {{ i18n.t('page.barbers.accountSection') }}
+          </p>
+          <mb-field [label]="i18n.t('page.barbers.fieldWorkEmail')">
+            <input type="email" class="mb-input" formControlName="email" autocomplete="email" />
+          </mb-field>
+          <mb-field [label]="i18n.t('page.barbers.fieldFullName')">
+            <input class="mb-input" formControlName="fullName" />
+          </mb-field>
+          <mb-field [label]="i18n.t('page.staff.fieldNewPassword')" [hint]="i18n.t('page.barbers.changePasswordHint')">
+            <input type="password" class="mb-input" formControlName="newPassword" autocomplete="new-password" />
+          </mb-field>
+          <mb-field [label]="i18n.t('page.barbers.fieldPasswordConfirm')">
+            <input type="password" class="mb-input" formControlName="newPasswordConfirm" autocomplete="new-password" />
           </mb-field>
         }
         <mb-field [label]="i18n.t('page.barbers.fieldDisplayName')">
@@ -361,18 +386,24 @@ export class BarbersPageComponent {
   });
 
   readonly formOpen = signal(false);
+  readonly formError = signal<string | null>(null);
   readonly creating = signal(false);
   readonly editingId = signal<string | null>(null);
+  readonly editingBarberUserId = signal<string | null>(null);
   readonly confirmOff = signal(false);
   readonly offTarget = signal<string | null>(null);
 
   readonly barberForm = this.fb.nonNullable.group({
-    email: ['', [Validators.email]],
-    fullName: [''],
+    email: ['', [Validators.required, Validators.email]],
+    fullName: ['', Validators.required],
     displayName: ['', Validators.required],
     branchId: ['', Validators.required],
     commissionPercent: [60, [Validators.required, Validators.min(0), Validators.max(100)]],
     isActive: this.fb.nonNullable.control<'true' | 'false'>('true'),
+    password: [''],
+    passwordConfirm: [''],
+    newPassword: [''],
+    newPasswordConfirm: [''],
   });
 
   onBarberMenu(row: OwnerDashboardBarberRow, id: string): void {
@@ -391,6 +422,8 @@ export class BarbersPageComponent {
   openCreate(): void {
     this.creating.set(true);
     this.editingId.set(null);
+    this.editingBarberUserId.set(null);
+    this.formError.set(null);
     const first = this.branches()[0]?.id ?? '';
     this.barberForm.reset({
       email: '',
@@ -399,57 +432,103 @@ export class BarbersPageComponent {
       branchId: first,
       commissionPercent: 60,
       isActive: 'true',
+      password: '',
+      passwordConfirm: '',
+      newPassword: '',
+      newPasswordConfirm: '',
     });
-    this.barberForm.get('email')?.setValidators([Validators.required, Validators.email]);
-    this.barberForm.get('fullName')?.setValidators([Validators.required]);
-    this.barberForm.get('email')?.updateValueAndValidity();
-    this.barberForm.get('fullName')?.updateValueAndValidity();
     this.formOpen.set(true);
   }
 
   openEdit(b: BarberProfile): void {
     this.creating.set(false);
     this.editingId.set(b.id);
-    this.barberForm.get('email')?.clearValidators();
-    this.barberForm.get('fullName')?.clearValidators();
-    this.barberForm.get('email')?.updateValueAndValidity();
-    this.barberForm.get('fullName')?.updateValueAndValidity();
-    this.barberForm.patchValue({
+    this.editingBarberUserId.set(b.userId);
+    this.formError.set(null);
+    const usr = this.db.getUserById(b.userId);
+    this.barberForm.reset({
+      email: usr?.email ?? '',
+      fullName: usr?.fullName ?? '',
       displayName: b.displayName,
       branchId: b.branchId,
       commissionPercent: b.commissionPercent,
       isActive: b.isActive ? 'true' : 'false',
+      password: '',
+      passwordConfirm: '',
+      newPassword: '',
+      newPasswordConfirm: '',
     });
     this.formOpen.set(true);
   }
 
   closeForm(): void {
     this.formOpen.set(false);
+    this.formError.set(null);
   }
 
   saveBarber(): void {
+    this.formError.set(null);
     if (this.barberForm.invalid) {
       return;
     }
     const v = this.barberForm.getRawValue();
+    const i = this.i18n;
     if (this.creating()) {
+      const pw = v.password.trim();
+      const pc = v.passwordConfirm.trim();
+      if (pw.length < 8) {
+        this.formError.set(i.t('validation.passwordMin8'));
+        return;
+      }
+      if (pw !== pc) {
+        this.formError.set(i.t('validation.passwordMismatch'));
+        return;
+      }
+      if (this.db.isEmailTaken(v.email)) {
+        this.formError.set(i.t('validation.emailTaken'));
+        return;
+      }
       this.db.createBarberAccount({
-        email: v.email,
-        fullName: v.fullName,
+        email: v.email.trim(),
+        fullName: v.fullName.trim(),
+        password: pw,
         branchId: v.branchId,
-        displayName: v.displayName,
+        displayName: v.displayName.trim(),
         commissionPercent: v.commissionPercent,
       });
     } else {
-      const id = this.editingId();
-      if (id) {
-        this.db.updateBarberProfile(id, {
-          displayName: v.displayName,
-          branchId: v.branchId,
-          commissionPercent: v.commissionPercent,
-          isActive: v.isActive === 'true',
-        });
+      const barberId = this.editingId();
+      const uid = this.editingBarberUserId();
+      if (!barberId || !uid) {
+        return;
       }
+      if (this.db.isEmailTaken(v.email, uid)) {
+        this.formError.set(i.t('validation.emailTaken'));
+        return;
+      }
+      this.db.updateUser(uid, {
+        email: v.email.trim(),
+        fullName: v.fullName.trim(),
+      });
+      const np = v.newPassword.trim();
+      const npc = v.newPasswordConfirm.trim();
+      if (np.length > 0 || npc.length > 0) {
+        if (np.length < 8) {
+          this.formError.set(i.t('validation.passwordMin8'));
+          return;
+        }
+        if (np !== npc) {
+          this.formError.set(i.t('validation.passwordMismatch'));
+          return;
+        }
+        this.db.setLoginPassword(uid, np);
+      }
+      this.db.updateBarberProfile(barberId, {
+        displayName: v.displayName.trim(),
+        branchId: v.branchId,
+        commissionPercent: v.commissionPercent,
+        isActive: v.isActive === 'true',
+      });
     }
     this.closeForm();
   }

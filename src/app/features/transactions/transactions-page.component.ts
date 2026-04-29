@@ -480,6 +480,22 @@ export class TransactionsPageComponent {
       this.branchFilter.set(q.get('branch') ?? '');
       this.barberFilter.set(q.get('barber') ?? '');
       this.pageIndex.set(0);
+
+      const txParam = q.get('tx');
+      if (!txParam) {
+        return;
+      }
+      setTimeout(() => {
+        const u = this.auth.currentUser();
+        if (!u) {
+          return;
+        }
+        const found = this.db.listTransactionsFiltered(u).find((t) => t.id === txParam);
+        if (found) {
+          this.selected.set(found);
+          this.detailOpen.set(true);
+        }
+      }, 0);
     });
 
     effect(() => {

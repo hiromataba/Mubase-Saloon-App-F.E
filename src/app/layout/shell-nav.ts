@@ -61,7 +61,7 @@ export const SHELL_NAV: ShellNavItem[] = [
     labelKey: 'nav.customers',
     path: '/customers',
     icon: 'users',
-    workspaces: ['owner'],
+    workspaces: ['owner', 'manager', 'accountant'],
   },
   { labelKey: 'nav.transactions', path: '/transactions', icon: 'credit' },
   {

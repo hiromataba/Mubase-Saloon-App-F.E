@@ -2,6 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
 import { I18nService } from '../../core/locale/i18n.service';
+import type { BranchStaffRole } from '../../data/models/domain.types';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { NewSaleModalService } from '../operations/new-sale-modal.service';
 import { MbBarChartComponent } from '../../shared/charts/mb-bar-chart.component';
@@ -266,7 +267,7 @@ import { formatUsd } from '../../shared/formatters';
                         <mb-badge tone="neutral" [caps]="false">{{ row.branchName }}</mb-badge>
                       </td>
                       <td class="mb-table-cell">
-                        <mb-badge tone="neutral" [caps]="false">{{ row.role }}</mb-badge>
+                        <mb-badge tone="neutral" [caps]="false">{{ i18n.staffRoleLabel(row.role) }}</mb-badge>
                       </td>
                     </tr>
                   }
@@ -282,7 +283,7 @@ import { formatUsd } from '../../shared/formatters';
                   <p class="text-xs text-slate-500">{{ row.email }}</p>
                   <div class="mt-2 flex flex-wrap gap-2">
                     <mb-badge tone="info">{{ row.branchName }}</mb-badge>
-                    <mb-badge tone="neutral">{{ row.role }}</mb-badge>
+                    <mb-badge tone="neutral">{{ i18n.staffRoleLabel(row.role) }}</mb-badge>
                   </div>
                 </li>
               }
@@ -571,8 +572,14 @@ export class DashboardPageComponent {
     if (!this.auth.isManagerWorkspace() || !u) {
       return [];
     }
-    const rows: { id: string; fullName: string; email: string; branchName: string; role: string; photoUrl: string }[] =
-      [];
+    const rows: {
+      id: string;
+      fullName: string;
+      email: string;
+      branchName: string;
+      role: BranchStaffRole;
+      photoUrl: string;
+    }[] = [];
     for (const b of this.db.listBranchesVisibleTo(u)) {
       for (const s of this.db.listStaffForBranch(b.id)) {
         const usr = this.db.getUserById(s.userId);

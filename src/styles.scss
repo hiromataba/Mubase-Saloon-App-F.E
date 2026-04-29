@@ -79,11 +79,6 @@
     color: var(--mb-text-secondary);
   }
 
-  /** Extra breathing room below page header for first stats row on small screens (all roles). */
-  .mb-page-stats-lead {
-    // @apply max-sm:pt-7 sm:pt-0;
-  }
-
   /* No backdrop-blur: it creates a stacking context so position:fixed dropdowns
      (mb-select) paint underneath later siblings (e.g. stats cards). */
   .mb-toolbar {

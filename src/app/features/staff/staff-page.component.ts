@@ -2,7 +2,7 @@ import { Component, computed, effect, inject, signal, untracked } from '@angular
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import type { BranchStaffRole } from '../../data/models/domain.types';
+import type { BranchStaffRole, BranchStaff, User } from '../../data/models/domain.types';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { I18nService } from '../../core/locale/i18n.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
@@ -83,10 +83,12 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
                     <mb-badge tone="neutral" [caps]="false">{{ row.branch.name }}</mb-badge>
                   </td>
                   <td class="mb-table-cell">
-                    <mb-badge [tone]="roleTone(row.assignment.role)" [caps]="false">{{ row.assignment.role }}</mb-badge>
+                    <mb-badge [tone]="roleTone(row.assignment.role)" [caps]="false">{{
+                      i18n.staffRoleLabel(row.assignment.role)
+                    }}</mb-badge>
                   </td>
                   <td class="mb-table-cell text-right">
-                    <mb-action-menu [items]="staffMenuItems()" (picked)="onStaffMenu(row.assignment.id, $event)" />
+                    <mb-action-menu [items]="staffMenuItems()" (picked)="onStaffMenu(row, $event)" />
                   </td>
                 </tr>
               }
@@ -103,11 +105,11 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
                   <p class="font-semibold text-slate-900 dark:text-white">{{ row.user.fullName }}</p>
                   <p class="text-xs text-slate-500">{{ row.user.email }}</p>
                 </div>
-                <mb-action-menu [items]="staffMenuItems()" (picked)="onStaffMenu(row.assignment.id, $event)" />
+                <mb-action-menu [items]="staffMenuItems()" (picked)="onStaffMenu(row, $event)" />
               </div>
               <div class="mt-2 flex flex-wrap gap-2">
                 <mb-badge tone="neutral">{{ row.branch.name }}</mb-badge>
-                <mb-badge [tone]="roleTone(row.assignment.role)">{{ row.assignment.role }}</mb-badge>
+                <mb-badge [tone]="roleTone(row.assignment.role)">{{ i18n.staffRoleLabel(row.assignment.role) }}</mb-badge>
               </div>
             </div>
           }
@@ -132,6 +134,9 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
       (closeClick)="inviteOpen.set(false)"
     >
       <form class="space-y-4" [formGroup]="inviteForm" (ngSubmit)="submitInvite()">
+        @if (inviteError()) {
+          <p class="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">{{ inviteError() }}</p>
+        }
         <mb-field [label]="i18n.t('page.staff.fieldEmail')">
           <input type="email" class="mb-input" formControlName="email" autocomplete="off" />
         </mb-field>
@@ -152,12 +157,52 @@ import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.co
             [placeholder]="i18n.t('page.staff.placeholderRole')"
           />
         </mb-field>
+        <mb-field [label]="i18n.t('page.staff.fieldPasswordInvite')">
+          <input type="password" class="mb-input" formControlName="password" autocomplete="new-password" />
+        </mb-field>
+        <mb-field [label]="i18n.t('page.staff.fieldPasswordConfirmInvite')">
+          <input type="password" class="mb-input" formControlName="passwordConfirm" autocomplete="new-password" />
+        </mb-field>
+        <p class="text-xs text-slate-500">
+          {{ i18n.t('page.staff.invitePasswordHint') }}
+        </p>
         <p class="text-xs text-slate-500">
           {{ i18n.t('page.staff.inviteHint') }}
         </p>
         <div class="flex flex-wrap gap-2 pt-2">
           <mb-btn type="submit" [disabled]="inviteForm.invalid">{{ i18n.t('page.staff.submitInvite') }}</mb-btn>
           <mb-btn type="button" variant="secondary" (click)="inviteOpen.set(false)">{{ i18n.t('common.cancel') }}</mb-btn>
+        </div>
+      </form>
+    </mb-modal>
+
+    <mb-modal
+      [open]="editUserOpen()"
+      [title]="i18n.t('page.staff.modalEditTitle')"
+      [description]="i18n.t('page.staff.modalEditDesc')"
+      size="lg"
+      (backdropClose)="editUserOpen.set(false)"
+      (closeClick)="editUserOpen.set(false)"
+    >
+      <form class="space-y-4" [formGroup]="editUserForm" (ngSubmit)="submitEditUser()">
+        @if (editUserError()) {
+          <p class="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">{{ editUserError() }}</p>
+        }
+        <mb-field [label]="i18n.t('page.staff.fieldEmail')">
+          <input type="email" class="mb-input" formControlName="email" autocomplete="email" />
+        </mb-field>
+        <mb-field [label]="i18n.t('page.staff.fieldFullName')">
+          <input class="mb-input" formControlName="fullName" />
+        </mb-field>
+        <mb-field [label]="i18n.t('page.staff.fieldNewPassword')">
+          <input type="password" class="mb-input" formControlName="newPassword" autocomplete="new-password" />
+        </mb-field>
+        <mb-field [label]="i18n.t('page.staff.fieldPasswordConfirmInvite')">
+          <input type="password" class="mb-input" formControlName="newPasswordConfirm" autocomplete="new-password" />
+        </mb-field>
+        <div class="flex flex-wrap gap-2 pt-2">
+          <mb-btn type="submit" [disabled]="editUserForm.invalid">{{ i18n.t('common.save') }}</mb-btn>
+          <mb-btn type="button" variant="secondary" (click)="editUserOpen.set(false)">{{ i18n.t('common.cancel') }}</mb-btn>
         </div>
       </form>
     </mb-modal>
@@ -246,18 +291,32 @@ export class StaffPageComponent {
   ]);
 
   readonly staffMenuItems = computed((): MbActionMenuItem[] => [
+    { id: 'edit', label: this.i18n.t('actionMenu.editStaffAccount') },
     { id: 'remove', label: this.i18n.t('actionMenu.removeAssignment'), danger: true },
   ]);
 
   readonly inviteOpen = signal(false);
+  readonly inviteError = signal<string | null>(null);
   readonly confirmRemove = signal(false);
   readonly removeTarget = signal<string | null>(null);
+  readonly editUserOpen = signal(false);
+  readonly editUserError = signal<string | null>(null);
+  readonly editingUserId = signal<string | null>(null);
 
   readonly inviteForm = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
     fullName: ['', Validators.required],
     branchId: ['', Validators.required],
     role: this.fb.nonNullable.control<BranchStaffRole>('MANAGER'),
+    password: [''],
+    passwordConfirm: [''],
+  });
+
+  readonly editUserForm = this.fb.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+    fullName: ['', Validators.required],
+    newPassword: [''],
+    newPasswordConfirm: [''],
   });
 
   roleTone(role: BranchStaffRole): 'info' | 'success' | 'neutral' {
@@ -272,28 +331,46 @@ export class StaffPageComponent {
 
   openInvite(): void {
     const first = this.allBranches()[0]?.id ?? '';
+    this.inviteError.set(null);
     this.inviteForm.reset({
       email: '',
       fullName: '',
       branchId: first,
       role: 'MANAGER',
+      password: '',
+      passwordConfirm: '',
     });
     this.inviteOpen.set(true);
   }
 
   submitInvite(): void {
+    this.inviteError.set(null);
     if (this.inviteForm.invalid) {
       return;
     }
     const v = this.inviteForm.getRawValue();
+    const i = this.i18n;
     const existing = this.db.findUserByEmail(v.email);
+    const pw = v.password.trim();
+    const pc = v.passwordConfirm.trim();
+    if (!existing) {
+      if (pw.length < 8) {
+        this.inviteError.set(i.t('validation.passwordMin8'));
+        return;
+      }
+      if (pw !== pc) {
+        this.inviteError.set(i.t('validation.passwordMismatch'));
+        return;
+      }
+    }
     let userId: string;
     if (existing) {
       userId = existing.id;
     } else {
       const u = this.db.createUser({
-        email: v.email,
-        fullName: v.fullName,
+        email: v.email.trim(),
+        fullName: v.fullName.trim(),
+        password: pw,
         isOwner: false,
         isActive: true,
       });
@@ -307,11 +384,59 @@ export class StaffPageComponent {
     this.inviteOpen.set(false);
   }
 
-  onStaffMenu(assignmentId: string, id: string): void {
+  onStaffMenu(
+    row: { assignment: BranchStaff; user: User; branch: { id: string; name: string } },
+    id: string,
+  ): void {
+    if (id === 'edit') {
+      this.editingUserId.set(row.user.id);
+      this.editUserError.set(null);
+      this.editUserForm.reset({
+        email: row.user.email,
+        fullName: row.user.fullName,
+        newPassword: '',
+        newPasswordConfirm: '',
+      });
+      this.editUserOpen.set(true);
+      return;
+    }
     if (id === 'remove') {
-      this.removeTarget.set(assignmentId);
+      this.removeTarget.set(row.assignment.id);
       this.confirmRemove.set(true);
     }
+  }
+
+  submitEditUser(): void {
+    this.editUserError.set(null);
+    if (this.editUserForm.invalid) {
+      return;
+    }
+    const uid = this.editingUserId();
+    if (!uid) {
+      return;
+    }
+    const v = this.editUserForm.getRawValue();
+    const i = this.i18n;
+    if (this.db.isEmailTaken(v.email.trim(), uid)) {
+      this.editUserError.set(i.t('validation.emailTaken'));
+      return;
+    }
+    this.db.updateUser(uid, { email: v.email.trim(), fullName: v.fullName.trim() });
+    const np = v.newPassword.trim();
+    const npc = v.newPasswordConfirm.trim();
+    if (np.length > 0 || npc.length > 0) {
+      if (np.length < 8) {
+        this.editUserError.set(i.t('validation.passwordMin8'));
+        return;
+      }
+      if (np !== npc) {
+        this.editUserError.set(i.t('validation.passwordMismatch'));
+        return;
+      }
+      this.db.setLoginPassword(uid, np);
+    }
+    this.editUserOpen.set(false);
+    this.editingUserId.set(null);
   }
 
   doRemove(): void {

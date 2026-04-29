@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, signal, untracked } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import type { Branch, Customer } from '../../data/models/domain.types';
-import { AuthService } from '../../core/auth/auth.service';
+import { Router } from '@angular/router';
+import type { Branch, Customer, TransactionListItem } from '../../data/models/domain.types';
 import { I18nService } from '../../core/locale/i18n.service';
 import { MockDatabaseService } from '../../data/services/mock-database.service';
 import { MbActionMenuComponent, type MbActionMenuItem } from '../../shared/ui/mb-action-menu.component';
@@ -15,9 +15,8 @@ import { MbPhoneInputComponent } from '../../shared/ui/mb-phone-input.component'
 import { MbAvatarComponent } from '../../shared/ui/mb-avatar.component';
 import { MbQuickStatTileComponent } from '../../shared/ui/mb-quick-stat-tile.component';
 import { MbQuickStatsRowComponent } from '../../shared/ui/mb-quick-stats-row.component';
-import { MbSelectComponent, type MbSelectOption } from '../../shared/ui/mb-select.component';
 import { MbTablePaginatorComponent } from '../../shared/ui/mb-table-paginator.component';
-import { formatDateTime } from '../../shared/formatters';
+import { formatDateTime, formatUsd } from '../../shared/formatters';
 
 @Component({
   standalone: true,
@@ -35,7 +34,6 @@ import { formatDateTime } from '../../shared/formatters';
     MbQuickStatTileComponent,
     MbTablePaginatorComponent,
     MbAvatarComponent,
-    MbSelectComponent,
     MbPhoneInputComponent,
   ],
   template: `
@@ -68,7 +66,7 @@ import { formatDateTime } from '../../shared/formatters';
           [value]="'' + customerStats().withWa"
           [hint]="customerStats().count ? customerStats().withWaPct + '%' : '—'"
         />
-        <mb-quick-stat-tile variant="sky" [label]="i18n.t('page.customers.statBranches')" [value]="'' + customerStats().branchCount" />
+        <mb-quick-stat-tile variant="sky" [label]="i18n.t('page.customers.statBranches')" [value]="'' + customerStats().locationsTouched" />
       </mb-quick-stats-row>
 
       <mb-card [title]="i18n.t('page.customers.dirTitleLead') + ' (' + filtered().length + ')'" [subtitle]="i18n.t('page.customers.dirSubtitle')" [padding]="false">
@@ -77,7 +75,7 @@ import { formatDateTime } from '../../shared/formatters';
             <thead>
               <tr class="mb-table-head">
                 <th>{{ i18n.t('page.customers.thCustomer') }}</th>
-                <th>{{ i18n.t('page.customers.labelBranch') }}</th>
+                <th>{{ i18n.t('page.customers.thBranchesVisited') }}</th>
                 <th>{{ i18n.t('page.customers.thWhatsapp') }}</th>
                 <th class="text-right">{{ i18n.t('page.customers.thVisits') }}</th>
                 <th>{{ i18n.t('page.customers.thLastVisit') }}</th>
@@ -98,13 +96,29 @@ import { formatDateTime } from '../../shared/formatters';
                     </div>
                   </td>
                   <td class="mb-table-cell">
-                    <mb-badge tone="neutral" [caps]="false">{{ row.branch.name }}</mb-badge>
+                    @if (row.branchesVisited.length) {
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (b of row.branchesVisited; track b.id) {
+                          <mb-badge tone="neutral" [caps]="false">{{ b.name }}</mb-badge>
+                        }
+                      </div>
+                    } @else {
+                      <span class="text-slate-400">{{ i18n.t('page.customers.noVisitsYet') }}</span>
+                    }
                   </td>
                   <td class="mb-table-cell text-slate-600 dark:text-slate-400">
                     {{ row.customer.whatsapp || row.customer.phone || '—' }}
                   </td>
                   <td class="mb-table-cell text-right">
-                    <mb-badge tone="info" [caps]="false">{{ row.visits }}</mb-badge>
+                    <button
+                      type="button"
+                      class="inline-flex rounded-lg transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:ring-2 focus-visible:ring-mb-ring disabled:pointer-events-none disabled:opacity-40 dark:hover:bg-slate-800"
+                      [disabled]="row.visits === 0"
+                      (click)="openVisitsModal(row)"
+                      [attr.aria-label]="i18n.t('page.customers.visitsAriaOpen')"
+                    >
+                      <mb-badge tone="info" [caps]="false">{{ row.visits }}</mb-badge>
+                    </button>
                   </td>
                   <td class="mb-table-cell text-xs text-slate-500 dark:text-slate-400">
                     {{ row.lastVisit ? formatDateTime(row.lastVisit) : '—' }}
@@ -126,7 +140,15 @@ import { formatDateTime } from '../../shared/formatters';
               <div class="flex items-start justify-between gap-2">
                 <div>
                   <p class="font-semibold text-slate-900 dark:text-white">{{ row.customer.fullName }}</p>
-                  <p class="text-xs text-slate-500">{{ row.branch.name }}</p>
+                  <div class="mt-1 flex flex-wrap gap-1">
+                    @if (row.branchesVisited.length) {
+                      @for (b of row.branchesVisited; track b.id) {
+                        <mb-badge tone="neutral" [caps]="false">{{ b.name }}</mb-badge>
+                      }
+                    } @else {
+                      <span class="text-xs text-slate-400">{{ i18n.t('page.customers.noVisitsYet') }}</span>
+                    }
+                  </div>
                 </div>
                 <mb-action-menu [items]="customerMenuItems()" (picked)="onCustomerMenu(row, $event)" />
               </div>
@@ -134,7 +156,15 @@ import { formatDateTime } from '../../shared/formatters';
                 {{ row.customer.whatsapp || row.customer.phone || i18n.t('page.customers.mobileNoWa') }}
               </p>
               <div class="mt-2 flex flex-wrap gap-2">
-                <mb-badge tone="info">{{ row.visits }} {{ i18n.t('page.customers.visitsCount') }}</mb-badge>
+                <button
+                  type="button"
+                  class="rounded-lg transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:ring-2 disabled:opacity-40 dark:hover:bg-slate-800"
+                  [disabled]="row.visits === 0"
+                  (click)="openVisitsModal(row)"
+                  [attr.aria-label]="i18n.t('page.customers.visitsAriaOpen')"
+                >
+                  <mb-badge tone="info">{{ row.visits }} {{ i18n.t('page.customers.visitsCount') }}</mb-badge>
+                </button>
                 @if (row.lastVisit) {
                   <mb-badge tone="neutral">{{ formatDateTime(row.lastVisit) }}</mb-badge>
                 }
@@ -164,13 +194,6 @@ import { formatDateTime } from '../../shared/formatters';
       (closeClick)="closeForm()"
     >
       <form class="space-y-6" [formGroup]="custForm" (ngSubmit)="saveCustomer()">
-        <mb-field [label]="i18n.t('page.customers.fieldBranch')">
-          <mb-select
-            formControlName="branchId"
-            [options]="customerBranchOptions()"
-            [placeholder]="i18n.t('page.customers.placeholderBranch')"
-          />
-        </mb-field>
         <mb-field [label]="i18n.t('page.customers.fieldFullName')">
           <input class="mb-input" formControlName="fullName" />
         </mb-field>
@@ -202,8 +225,18 @@ import { formatDateTime } from '../../shared/formatters';
       @if (detailCustomer(); as c) {
         <dl class="space-y-3 text-sm">
           <div>
-            <dt class="text-slate-500">{{ i18n.t('page.customers.labelBranch') }}</dt>
-            <dd class="font-medium">{{ detailBranch()?.name }}</dd>
+            <dt class="text-slate-500">{{ i18n.t('page.customers.thBranchesVisited') }}</dt>
+            <dd class="font-medium">
+              @if (detailBranchesVisited().length) {
+                <div class="mt-1 flex flex-wrap gap-1.5">
+                  @for (b of detailBranchesVisited(); track b.id) {
+                    <mb-badge tone="neutral" [caps]="false">{{ b.name }}</mb-badge>
+                  }
+                </div>
+              } @else {
+                {{ i18n.t('page.customers.noVisitsYet') }}
+              }
+            </dd>
           </div>
           <div>
             <dt class="text-slate-500">{{ i18n.t('page.customers.labelWhatsapp') }}</dt>
@@ -214,6 +247,42 @@ import { formatDateTime } from '../../shared/formatters';
             <dd class="font-medium">{{ c.notes || '—' }}</dd>
           </div>
         </dl>
+      }
+    </mb-modal>
+
+    <mb-modal
+      [open]="visitsModalOpen()"
+      [title]="visitsHeading()"
+      [description]="i18n.t('page.customers.visitsModalHint')"
+      size="xl"
+      (backdropClose)="closeVisitsModal()"
+      (closeClick)="closeVisitsModal()"
+    >
+      @if (customerVisitTransactions().length === 0) {
+        <p class="py-10 text-center text-sm text-slate-500">{{ i18n.t('page.customers.noVisitsYet') }}</p>
+      } @else {
+        <ul class="divide-y divide-slate-100 dark:divide-slate-800">
+          @for (t of customerVisitTransactions(); track t.id) {
+            <li>
+              <button
+                type="button"
+                class="flex w-full flex-wrap items-center justify-between gap-3 px-2 py-3.5 text-left text-sm transition hover:bg-[var(--mb-hover-row)]"
+                (click)="openTransactionLedger(t)"
+              >
+                <div class="min-w-0 flex-1">
+                  <p class="font-medium text-slate-900 dark:text-white">{{ t.serviceNameSnapshot }}</p>
+                  <p class="text-xs text-slate-500">
+                    {{ formatDateTime(t.paymentDate) }} · {{ t.branch.name }} ·
+                    {{ t.receipt?.receiptNumber ?? '—' }}
+                  </p>
+                </div>
+                <span class="shrink-0 font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                  {{ formatUsd(t.totalAmount) }}
+                </span>
+              </button>
+            </li>
+          }
+        </ul>
       }
     </mb-modal>
 
@@ -229,46 +298,45 @@ import { formatDateTime } from '../../shared/formatters';
   `,
 })
 export class CustomersPageComponent {
-  readonly auth = inject(AuthService);
   readonly db = inject(MockDatabaseService);
   readonly i18n = inject(I18nService);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   readonly formatDateTime = formatDateTime;
+  readonly formatUsd = formatUsd;
+
+  readonly visitsModalOpen = signal(false);
+  readonly visitsCustomer = signal<Customer | null>(null);
+
+  readonly customerVisitTransactions = computed(() => {
+    const c = this.visitsCustomer();
+    return c ? this.db.listTransactionsForCustomer(c.id) : [];
+  });
+
+  readonly visitsHeading = computed(() => {
+    const c = this.visitsCustomer();
+    if (!c) {
+      return '';
+    }
+    return `${c.fullName} · ${this.i18n.t('page.customers.visitsModalTitle')}`;
+  });
 
   readonly query = signal('');
   readonly pageIndex = signal(0);
   readonly pageSize = signal(5);
-  readonly branches = computed(() => {
-    const u = this.auth.currentUser();
-    return u ? this.db.listBranchesVisibleTo(u) : [];
-  });
 
-  readonly customerBranchOptions = computed((): MbSelectOption[] =>
-    this.branches().map((b) => ({ value: b.id, label: b.name })),
+  readonly rows = computed(() =>
+    this.db
+      .listCustomers()
+      .map((c) => ({
+        customer: c,
+        branchesVisited: this.db.branchesVisitedByCustomer(c.id),
+        visits: this.db.customerVisitCount(c.id),
+        lastVisit: this.db.lastVisitForCustomer(c.id),
+      }))
+      .sort((a, b) => (b.lastVisit ?? '').localeCompare(a.lastVisit ?? '')),
   );
-
-  readonly rows = computed(() => {
-    const u = this.auth.currentUser();
-    const branches = u ? this.db.listBranchesVisibleTo(u) : [];
-    const out: {
-      customer: Customer;
-      branch: Branch;
-      visits: number;
-      lastVisit: string | null;
-    }[] = [];
-    for (const b of branches) {
-      for (const c of this.db.listCustomersForBranch(b.id)) {
-        out.push({
-          customer: c,
-          branch: b,
-          visits: this.db.customerVisitCount(c.id),
-          lastVisit: this.db.lastVisitForCustomer(c.id),
-        });
-      }
-    }
-    return out.sort((a, b) => (b.lastVisit ?? '').localeCompare(a.lastVisit ?? ''));
-  });
 
   readonly filtered = computed(() => {
     const q = this.query().trim().toLowerCase();
@@ -296,11 +364,13 @@ export class CustomersPageComponent {
       if (wa || legacyPhone) {
         withWa += 1;
       }
-      branches.add(r.branch.id);
+      for (const b of r.branchesVisited) {
+        branches.add(b.id);
+      }
     }
     const n = rows.length;
     const withWaPct = n ? Math.round((withWa / n) * 100) : 0;
-    return { count: n, visits, withWa, withWaPct: '' + withWaPct, branchCount: branches.size };
+    return { count: n, visits, withWa, withWaPct: '' + withWaPct, locationsTouched: branches.size };
   });
 
   readonly paged = computed(() => {
@@ -334,12 +404,11 @@ export class CustomersPageComponent {
   readonly editingId = signal<string | null>(null);
   readonly detailOpen = signal(false);
   readonly detailCustomer = signal<Customer | null>(null);
-  readonly detailBranch = signal<Branch | null>(null);
+  readonly detailBranchesVisited = signal<Branch[]>([]);
   readonly confirmDelete = signal(false);
   readonly deleteTarget = signal<string | null>(null);
 
   readonly custForm = this.fb.nonNullable.group({
-    branchId: ['', Validators.required],
     fullName: ['', Validators.required],
     whatsapp: [''],
     notes: [''],
@@ -357,18 +426,17 @@ export class CustomersPageComponent {
   }
 
   onCustomerMenu(
-    row: { customer: Customer; branch: Branch },
+    row: { customer: Customer; branchesVisited: Branch[]; visits: number; lastVisit: string | null },
     id: string,
   ): void {
     if (id === 'view') {
       this.detailCustomer.set(row.customer);
-      this.detailBranch.set(row.branch);
+      this.detailBranchesVisited.set(row.branchesVisited);
       this.detailOpen.set(true);
     }
     if (id === 'edit') {
       this.editingId.set(row.customer.id);
       this.custForm.patchValue({
-        branchId: row.customer.branchId,
         fullName: row.customer.fullName,
         whatsapp: row.customer.whatsapp ?? row.customer.phone ?? '',
         notes: row.customer.notes ?? '',
@@ -383,9 +451,7 @@ export class CustomersPageComponent {
 
   openAdd(): void {
     this.editingId.set(null);
-    const first = this.branches()[0]?.id ?? '';
     this.custForm.reset({
-      branchId: first,
       fullName: '',
       whatsapp: '',
       notes: '',
@@ -406,7 +472,6 @@ export class CustomersPageComponent {
     const hasWa = wa.replace(/\D/g, '').length > 0;
     if (this.editingId()) {
       this.db.updateCustomer(this.editingId()!, {
-        branchId: v.branchId,
         fullName: v.fullName,
         phone: null,
         whatsapp: hasWa ? wa : null,
@@ -414,7 +479,6 @@ export class CustomersPageComponent {
       });
     } else {
       this.db.createCustomer({
-        branchId: v.branchId,
         fullName: v.fullName,
         phone: null,
         whatsapp: hasWa ? wa : null,
@@ -431,5 +495,23 @@ export class CustomersPageComponent {
     }
     this.confirmDelete.set(false);
     this.deleteTarget.set(null);
+  }
+
+  openVisitsModal(row: { customer: Customer; visits: number }): void {
+    if (row.visits <= 0) {
+      return;
+    }
+    this.visitsCustomer.set(row.customer);
+    this.visitsModalOpen.set(true);
+  }
+
+  closeVisitsModal(): void {
+    this.visitsModalOpen.set(false);
+    this.visitsCustomer.set(null);
+  }
+
+  openTransactionLedger(t: TransactionListItem): void {
+    void this.router.navigate(['/transactions'], { queryParams: { tx: t.id } });
+    this.closeVisitsModal();
   }
 }

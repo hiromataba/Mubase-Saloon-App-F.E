@@ -50,9 +50,9 @@ export interface Service {
   isActive: boolean;
 }
 
+/** Company-wide CRM record; branch visits are inferred from transactions. */
 export interface Customer {
   id: string;
-  branchId: string;
   fullName: string;
   phone?: string | null;
   whatsapp?: string | null;

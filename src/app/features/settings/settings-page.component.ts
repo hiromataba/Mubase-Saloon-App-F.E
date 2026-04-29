@@ -136,7 +136,7 @@ import { MbCardComponent } from '../../shared/ui/mb-card.component';
                 <mb-badge tone="neutral">{{ i18n.t('page.settings.badgeBarberProfile') }}</mb-badge>
               }
               @for (s of auth.currentUser()?.staffBranches ?? []; track s.branchId + s.role) {
-                <mb-badge tone="neutral">{{ s.role }} · {{ branchLabel(s.branchId) }}</mb-badge>
+                <mb-badge tone="neutral">{{ i18n.staffRoleLabel(s.role) }} · {{ branchLabel(s.branchId) }}</mb-badge>
               }
               @if (!auth.currentUser()?.isOwner && (auth.currentUser()?.staffBranches?.length ?? 0) === 0 && !auth.currentUser()?.barberProfileId) {
                 <span class="text-slate-500">—</span>

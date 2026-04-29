@@ -82,8 +82,8 @@ export const I18N = {
   },
   'login.signIn': { en: 'Sign in', fr: 'Connexion' },
   'login.signInSubtitle': {
-    en: 'Demo · any password (8+ chars)',
-    fr: 'Démo · tout mot de passe (8 caractères min.)',
+    en: 'Demo · seeded accounts use password MubaseDemo2024!',
+    fr: 'Démo · les comptes fournis utilisent le mot de passe MubaseDemo2024!',
   },
   'login.email': { en: 'Email', fr: 'Courriel' },
   'login.password': { en: 'Password', fr: 'Mot de passe' },
@@ -119,8 +119,8 @@ export const I18N = {
 
   'page.customers.title': { en: 'Customers', fr: 'Clients' },
   'page.customers.subtitle': {
-    en: 'Branch directory · visits from mock transactions',
-    fr: 'Carnet par branche · passages issus du mock',
+    en: 'Company-wide directory · salons visited are inferred from recorded sales',
+    fr: 'Carnet unique · salons fréquentés déduits des ventes',
   },
   'page.staff.title': { en: 'Staff', fr: 'Personnel' },
   'page.staff.subtitle': {
@@ -283,6 +283,18 @@ export const I18N = {
   'common.delete': { en: 'Delete', fr: 'Supprimer' },
   'common.deactivate': { en: 'Deactivate', fr: 'Désactiver' },
   'common.remove': { en: 'Remove', fr: 'Retirer' },
+  'validation.passwordMin8': {
+    en: 'Password must be at least 8 characters.',
+    fr: 'Le mot de passe doit contenir au moins 8 caractères.',
+  },
+  'validation.passwordMismatch': {
+    en: 'Password confirmation does not match.',
+    fr: 'La confirmation ne correspond pas au mot de passe.',
+  },
+  'validation.emailTaken': {
+    en: 'This email is already used by another user.',
+    fr: 'Cette adresse courriel est déjà utilisée par un autre compte.',
+  },
 
   /** Modal accessibility */
   'modal.ariaCloseDialog': { en: 'Close dialog', fr: 'Fermer la fenêtre' },
@@ -304,6 +316,10 @@ export const I18N = {
     fr: 'Voir les performances',
   },
   'actionMenu.editBarber': { en: 'Edit barber', fr: 'Modifier le barbier' },
+  'actionMenu.editStaffAccount': {
+    en: 'Edit account',
+    fr: 'Modifier le compte',
+  },
 
   /** New sale modal — form & success panel */
   'sale.section.sale': { en: 'Sale', fr: 'Vente' },
@@ -335,6 +351,18 @@ export const I18N = {
     en: 'New customer — use name below',
     fr: 'Nouveau client — saisir le nom ci-dessous',
   },
+  'sale.customerSearch.placeholder': {
+    en: 'Search customers…',
+    fr: 'Rechercher des clients…',
+  },
+  'sale.customerSearch.aria': {
+    en: 'Filter customer list',
+    fr: 'Filtrer la liste des clients',
+  },
+  'sale.customerSearch.noMatches': {
+    en: 'No customers match your search.',
+    fr: 'Aucun client ne correspond.',
+  },
   'sale.field.displayName': { en: 'Display name', fr: 'Nom affiché' },
   'sale.field.displayNameHint': {
     en: 'On receipt; if nobody is selected above, we save this person for this branch',
@@ -344,6 +372,15 @@ export const I18N = {
   'sale.field.whatsappHint': {
     en: 'Optional — for receipts and follow-up',
     fr: 'Optionnel — pour reçus et suivi',
+  },
+  'sale.field.notes': { en: 'Notes', fr: 'Notes' },
+  'sale.field.notesHint': {
+    en: 'Optional — internal memo for this sale',
+    fr: 'Optionnel — mémo interne pour cette vente',
+  },
+  'sale.placeholder.notes': {
+    en: 'e.g. product add-on, VIP, special request…',
+    fr: 'ex. supplément produit, VIP, demande particulière…',
   },
   'sale.badge.liveSplit': { en: 'Live split', fr: 'Partage en direct' },
   'sale.preview.barberPct': { en: 'Barber %', fr: '% barbier' },
@@ -421,8 +458,24 @@ export const I18N = {
     fr: 'Courriel professionnel (connexion)',
   },
   'page.barbers.fieldWorkEmailHint': {
-    en: 'Demo auth still uses email match only',
-    fr: 'La démo n’authentifie que par courriel',
+    en: 'Used to sign in together with the password you set.',
+    fr: 'Utilisé pour la connexion avec le mot de passe défini.',
+  },
+  'page.barbers.fieldPasswordCreate': {
+    en: 'Login password',
+    fr: 'Mot de passe de connexion',
+  },
+  'page.barbers.fieldPasswordConfirm': {
+    en: 'Confirm password',
+    fr: 'Confirmer le mot de passe',
+  },
+  'page.barbers.accountSection': {
+    en: 'Account',
+    fr: 'Compte',
+  },
+  'page.barbers.changePasswordHint': {
+    en: 'Leave blank to keep current password. Minimum 8 characters.',
+    fr: 'Laisser vide pour garder le mot de passe actuel (≥8 caractères).',
   },
   'page.barbers.fieldFullName': { en: 'Full name', fr: 'Nom complet' },
   'page.barbers.fieldDisplayName': { en: 'Display name', fr: 'Nom affiché' },
@@ -509,13 +562,10 @@ export const I18N = {
   'page.customers.modalEdit': { en: 'Edit customer', fr: 'Modifier le client' },
   'page.customers.modalDetailFallback': { en: 'Customer', fr: 'Client' },
   'page.customers.modalDetailDesc': { en: 'Profile', fr: 'Profil' },
-  'page.customers.fieldBranch': { en: 'Branch', fr: 'Branche' },
-  'page.customers.placeholderBranch': { en: 'Branch', fr: 'Branche' },
   'page.customers.fieldFullName': { en: 'Full name', fr: 'Nom complet' },
   'page.customers.fieldWhatsapp': { en: 'WhatsApp number', fr: 'Numéro WhatsApp' },
   'page.customers.fieldWhatsappHint': { en: 'Optional', fr: 'Optionnel' },
   'page.customers.fieldNotes': { en: 'Notes', fr: 'Notes' },
-  'page.customers.labelBranch': { en: 'Branch', fr: 'Branche' },
   'page.customers.labelWhatsapp': { en: 'WhatsApp', fr: 'WhatsApp' },
   'page.customers.labelNotes': { en: 'Notes', fr: 'Notes' },
   'page.customers.confirmDeleteTitle': {
@@ -526,6 +576,19 @@ export const I18N = {
     en: 'This removes the CRM record only. Transaction history keeps snapshots.',
     fr: 'Supprime seulement la fiche CRM. L’historique des opérations garde les instantanés.',
   },
+  'page.customers.visitsModalTitle': {
+    en: 'Visit history',
+    fr: 'Historique des passages',
+  },
+  'page.customers.visitsModalHint': {
+    en: 'Select a sale to view the full receipt.',
+    fr: 'Sélectionnez une vente pour voir le reçu complet.',
+  },
+  'page.customers.visitsAriaOpen': {
+    en: 'Show visit history',
+    fr: 'Afficher les passages',
+  },
+
   /** Customers — directory list */
   'page.customers.searchPlaceholder': {
     en: 'Search name or WhatsApp…',
@@ -535,11 +598,19 @@ export const I18N = {
   'page.customers.statCount': { en: 'Customers', fr: 'Clients' },
   'page.customers.statVisits': { en: 'Total visits', fr: 'Visites totales' },
   'page.customers.statWithWa': { en: 'With WhatsApp', fr: 'Avec WhatsApp' },
-  'page.customers.statBranches': { en: 'Branches', fr: 'Branches' },
+  'page.customers.statBranches': {
+    en: 'Locations (distinct branch visits)',
+    fr: 'Salons (nombre distinct)',
+  },
   'page.customers.dirTitleLead': { en: 'Directory', fr: 'Annuaire' },
   'page.customers.dirSubtitle': {
-    en: 'WhatsApp · last visit',
-    fr: 'WhatsApp · dernière visite',
+    en: 'WhatsApp · salons from sales · last visit',
+    fr: 'WhatsApp · salons (ventes) · dernière visite',
+  },
+  'page.customers.thBranchesVisited': { en: 'Salons visited', fr: 'Salons fréquentés' },
+  'page.customers.noVisitsYet': {
+    en: 'None yet (appear after a sale)',
+    fr: 'Aucun (après une vente)',
   },
   'page.customers.thCustomer': { en: 'Customer', fr: 'Client' },
   'page.customers.thWhatsapp': { en: 'WhatsApp', fr: 'WhatsApp' },
@@ -597,6 +668,30 @@ export const I18N = {
     en: 'Create & assign',
     fr: 'Créer et affecter',
   },
+  'page.staff.modalEditTitle': {
+    en: 'Edit staff account',
+    fr: 'Modifier un compte personnel',
+  },
+  'page.staff.modalEditDesc': {
+    en: 'Update name, email, or login password (mock).',
+    fr: 'Modifier le nom, le courriel ou le mot de passe (simulation).',
+  },
+  'page.staff.fieldPasswordInvite': {
+    en: 'Login password (new users only)',
+    fr: 'Mot de passe (nouveaux comptes seulement)',
+  },
+  'page.staff.fieldPasswordConfirmInvite': {
+    en: 'Confirm password',
+    fr: 'Confirmer le mot de passe',
+  },
+  'page.staff.invitePasswordHint': {
+    en: 'If this email is new, we create an account with this password. If the person already exists, passwords are ignored.',
+    fr: 'Si ce courriel est nouveau, un compte est créé avec ce mot de passe. Sinon, le mot de passe est ignoré.',
+  },
+  'page.staff.fieldNewPassword': {
+    en: 'New password (optional)',
+    fr: 'Nouveau mot de passe (optionnel)',
+  },
   'page.staff.confirmRemoveTitle': {
     en: 'Remove assignment?',
     fr: 'Retirer l’affectation ?',
@@ -635,6 +730,14 @@ export const I18N = {
   'page.branches.createStaffHint': {
     en: 'Adds a branch manager login in mock data and assigns them to this location.',
     fr: 'Ajoute une connexion gestionnaire simulée et l’affecte à ce lieu.',
+  },
+  'page.branches.staffManagerPassword': {
+    en: 'Login password for this manager',
+    fr: 'Mot de passe de connexion pour ce gestionnaire',
+  },
+  'page.branches.staffManagerPasswordConfirm': {
+    en: 'Confirm password',
+    fr: 'Confirmer le mot de passe',
   },
   'page.branches.statusActive': { en: 'Active', fr: 'Actif' },
   'page.branches.statusInactive': { en: 'Inactive', fr: 'Inactif' },

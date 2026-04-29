@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import type { PaymentMethod } from '../../data/models/domain.types';
+import type { BranchStaffRole, PaymentMethod } from '../../data/models/domain.types';
 import type { AppLocale } from './locale.service';
 import { LocaleService } from './locale.service';
 import { I18N, type I18nKey } from './i18n.dictionary';
@@ -43,5 +43,15 @@ export class I18nService {
       OTHER: 'sale.pay.other',
     };
     return this.t(map[m]);
+  }
+
+  /** Branch staff role (Manager, Accountant, Receptionist) — not raw enum strings */
+  staffRoleLabel(role: BranchStaffRole): string {
+    const map: Record<BranchStaffRole, I18nKey> = {
+      MANAGER: 'login.role.manager',
+      ACCOUNTANT: 'login.role.accountant',
+      RECEPTIONIST: 'login.role.receptionist',
+    };
+    return this.t(map[role]);
   }
 }

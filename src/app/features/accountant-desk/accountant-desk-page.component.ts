@@ -49,12 +49,6 @@ import { formatUsd } from '../../shared/formatters';
         <mb-btn (click)="saleModal.openModal()">{{ i18n.t('shell.newSale') }}</mb-btn>
       </div>
 
-      <mb-card [title]="i18n.t('page.accountant.branchesCardTitle')" [subtitle]="i18n.t('page.accountant.branchesCardSub')">
-        <p class="text-sm text-slate-600 dark:text-slate-400">
-          {{ branchSummary() }}
-        </p>
-      </mb-card>
-
       <mb-quick-stats-row lead>
         <mb-quick-stat-tile
           variant="violet"
@@ -81,6 +75,12 @@ import { formatUsd } from '../../shared/formatters';
           [hint]="formatUsd(scopedRevenue())"
         />
       </mb-quick-stats-row>
+
+      <mb-card [title]="i18n.t('page.accountant.branchesCardTitle')" [subtitle]="i18n.t('page.accountant.branchesCardSub')">
+        <p class="text-sm text-slate-600 dark:text-slate-400">
+          {{ branchSummary() }}
+        </p>
+      </mb-card>
 
       <mb-card [title]="i18n.t('page.accountant.recentSalesTitle')" [subtitle]="i18n.t('page.accountant.recentSalesSub')" [padding]="false">
         @if (scopedSorted().length === 0) {

@@ -38,7 +38,7 @@ import { formatUsd } from '../../shared/formatters';
         <mb-btn class="mt-4" variant="secondary" (click)="go('/dashboard')">{{ i18n.t('common.back') }}</mb-btn>
       </mb-card>
     } @else {
-      <div class="mx-auto max-w-5xl space-y-6 md:space-y-8 lg:space-y-10">
+      <div class="mx-auto w-full min-w-0 max-w-5xl space-y-6 md:space-y-8 lg:space-y-10">
         <div class="mb-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between lg:gap-8">
           <div>
             <h1 class="mb-page-title">{{ i18n.t('page.myDesk.title') }}</h1>
@@ -47,7 +47,7 @@ import { formatUsd } from '../../shared/formatters';
           <mb-btn variant="secondary" (click)="go('/transactions')">{{ i18n.t('page.myDesk.historyCta') }}</mb-btn>
         </div>
 
-        <div class="mb-page-stats-lead grid gap-6 sm:grid-cols-3 lg:gap-8">
+        <div class="mb-page-stats-lead mt-7 grid gap-6 sm:grid-cols-3 md:mt-9 lg:mt-10 lg:gap-8">
           <mb-stat-card
             icon="revenue"
             [label]="i18n.t('page.myDesk.statYourEarnings')"
@@ -67,16 +67,9 @@ import { formatUsd } from '../../shared/formatters';
           />
         </div>
 
-        <mb-card [title]="i18n.t('page.myDesk.earnTrendTitle')" [subtitle]="i18n.t('page.myDesk.earnTrendSub')">
-          <mb-line-chart
-            [labels]="trend().labels"
-            [values]="trend().values"
-            [label]="i18n.t('page.myDesk.chartYourEarnings')"
-          />
-        </mb-card>
-
-        <mb-quick-stats-row>
-          <mb-quick-stat-tile
+        <div class="mt-7 md:mt-9 lg:mt-11">
+          <mb-quick-stats-row>
+            <mb-quick-stat-tile
             variant="violet"
             [label]="i18n.t('page.myDesk.todaySales')"
             [value]="'' + txStats().todayCount"
@@ -99,8 +92,18 @@ import { formatUsd } from '../../shared/formatters';
             [label]="i18n.t('page.myDesk.yourCutMonth')"
             [value]="formatUsd(monthBarberCut())"
           />
-        </mb-quick-stats-row>
+          </mb-quick-stats-row>
+        </div>
 
+        <mb-card [title]="i18n.t('page.myDesk.earnTrendTitle')" [subtitle]="i18n.t('page.myDesk.earnTrendSub')">
+          <mb-line-chart
+            [labels]="trend().labels"
+            [values]="trend().values"
+            [label]="i18n.t('page.myDesk.chartYourEarnings')"
+          />
+        </mb-card>
+
+        <div class="mt-8 md:mt-11 lg:mt-12">
         <mb-card [title]="i18n.t('page.myDesk.recentCutsTitle')" [subtitle]="i18n.t('page.myDesk.recentCutsSub')" [padding]="false">
           @if (dash().recent.length === 0) {
             <p class="p-6 py-8 text-center text-sm text-slate-500">{{ i18n.t('page.myDesk.emptyServices') }}</p>
@@ -175,6 +178,7 @@ import { formatUsd } from '../../shared/formatters';
             />
           }
         </mb-card>
+        </div>
       </div>
     }
   `,

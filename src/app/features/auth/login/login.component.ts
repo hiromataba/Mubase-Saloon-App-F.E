@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { I18nService } from '../../../core/locale/i18n.service';
 import { LocaleService } from '../../../core/locale/locale.service';
-import { MOCK_BARBER_PROFILES, MOCK_BRANCH_STAFF, MOCK_USERS } from '../../../data/mock/mock-seed';
+import { MOCK_BARBER_PROFILES, MOCK_BRANCH_STAFF, MOCK_USERS, MOCK_SEED_LOGIN_PASSWORD } from '../../../data/mock/mock-seed';
 import { MbButtonComponent } from '../../../shared/ui/mb-button.component';
 import { MbCardComponent } from '../../../shared/ui/mb-card.component';
 
@@ -158,7 +158,7 @@ export class LoginComponent {
 
   readonly form = this.fb.nonNullable.group({
     email: ['owner@mubase.demo', [Validators.required, Validators.email]],
-    password: ['demo-pass-1', [Validators.required, Validators.minLength(8)]],
+    password: [MOCK_SEED_LOGIN_PASSWORD, [Validators.required, Validators.minLength(8)]],
   });
 
   roleLabel(u: (typeof MOCK_USERS)[0]): string {
@@ -182,7 +182,7 @@ export class LoginComponent {
   }
 
   pickDemo(email: string): void {
-    this.form.patchValue({ email, password: 'demo-pass-1' });
+    this.form.patchValue({ email, password: MOCK_SEED_LOGIN_PASSWORD });
   }
 
   submit(): void {

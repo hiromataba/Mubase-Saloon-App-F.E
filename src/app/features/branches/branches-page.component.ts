@@ -139,7 +139,7 @@ import { formatUsd } from '../../shared/formatters';
                   <li class="flex items-center justify-between gap-3 px-4 py-3 text-sm">
                     <div>
                       <p class="font-medium">{{ s.fullName }}</p>
-                      <p class="text-xs text-slate-500">{{ s.role }}</p>
+                      <p class="text-xs text-slate-500">{{ i18n.staffRoleLabel(s.role) }}</p>
                     </div>
                     <mb-btn variant="ghost" size="sm" (click)="removeStaff(s.id)">{{
                       i18n.t('page.branches.removeStaffBtn')
@@ -190,6 +190,9 @@ import { formatUsd } from '../../shared/formatters';
       (closeClick)="closeEdit()"
     >
       <form class="space-y-6" [formGroup]="branchForm" (ngSubmit)="saveBranch()">
+        @if (branchModalError()) {
+          <p class="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:text-red-400">{{ branchModalError() }}</p>
+        }
         <mb-field [label]="i18n.t('page.branches.fieldName')">
           <input class="mb-input" formControlName="name" />
         </mb-field>
@@ -225,6 +228,14 @@ import { formatUsd } from '../../shared/formatters';
               </span>
             </span>
           </label>
+        }
+        @if (adding() && branchForm.controls.createStaffAccount.value) {
+          <mb-field [label]="i18n.t('page.branches.staffManagerPassword')">
+            <input type="password" class="mb-input" formControlName="staffPassword" autocomplete="new-password" />
+          </mb-field>
+          <mb-field [label]="i18n.t('page.branches.staffManagerPasswordConfirm')">
+            <input type="password" class="mb-input" formControlName="staffPasswordConfirm" autocomplete="new-password" />
+          </mb-field>
         }
         <div class="flex flex-wrap gap-2 pt-2">
           <mb-btn type="submit" [disabled]="branchForm.invalid">{{ i18n.t('common.save') }}</mb-btn>
@@ -321,6 +332,7 @@ export class BranchesPageComponent {
   readonly deactivateTarget = signal<string | null>(null);
   readonly confirmStaffRemove = signal(false);
   readonly staffRemoveTarget = signal<string | null>(null);
+  readonly branchModalError = signal<string | null>(null);
 
   readonly branchForm = this.fb.nonNullable.group({
     name: ['', Validators.required],
@@ -329,6 +341,8 @@ export class BranchesPageComponent {
     phone: [''],
     isActive: this.fb.nonNullable.control<'true' | 'false'>('true'),
     createStaffAccount: [false],
+    staffPassword: [''],
+    staffPasswordConfirm: [''],
   });
 
   readonly assignForm = this.fb.nonNullable.group({
@@ -407,6 +421,7 @@ export class BranchesPageComponent {
   openAdd(): void {
     this.adding.set(true);
     this.editingId.set(null);
+    this.branchModalError.set(null);
     this.branchForm.reset({
       name: '',
       code: '',
@@ -414,6 +429,8 @@ export class BranchesPageComponent {
       phone: '',
       isActive: 'true',
       createStaffAccount: false,
+      staffPassword: '',
+      staffPasswordConfirm: '',
     });
     this.editOpen.set(true);
   }
@@ -421,6 +438,7 @@ export class BranchesPageComponent {
   openEdit(b: Branch): void {
     this.adding.set(false);
     this.editingId.set(b.id);
+    this.branchModalError.set(null);
     this.branchForm.patchValue({
       name: b.name,
       code: b.code,
@@ -428,12 +446,15 @@ export class BranchesPageComponent {
       phone: b.phone ?? '',
       isActive: b.isActive ? 'true' : 'false',
       createStaffAccount: false,
+      staffPassword: '',
+      staffPasswordConfirm: '',
     });
     this.editOpen.set(true);
   }
 
   closeEdit(): void {
     this.editOpen.set(false);
+    this.branchModalError.set(null);
   }
 
   saveBranch(): void {
@@ -441,8 +462,22 @@ export class BranchesPageComponent {
       return;
     }
     const v = this.branchForm.getRawValue();
+    this.branchModalError.set(null);
+    const i = this.i18n;
     const active = v.isActive === 'true';
     if (this.adding()) {
+      if (v.createStaffAccount) {
+        const sp = (v.staffPassword ?? '').trim();
+        const sc = (v.staffPasswordConfirm ?? '').trim();
+        if (sp.length < 8) {
+          this.branchModalError.set(i.t('validation.passwordMin8'));
+          return;
+        }
+        if (sp !== sc) {
+          this.branchModalError.set(i.t('validation.passwordMismatch'));
+          return;
+        }
+      }
       const branch = this.db.createBranch({
         name: v.name,
         code: v.code,
@@ -451,11 +486,13 @@ export class BranchesPageComponent {
         isActive: active,
       });
       if (v.createStaffAccount) {
+        const sp = (v.staffPassword ?? '').trim();
         const slug = branch.id.replace(/^br-/, '');
         const user = this.db.createUser({
           email: `manager.${slug}@mubase.mock`,
           fullName: `${v.name.trim()} — manager`,
           phone: v.phone || null,
+          password: sp,
           isOwner: false,
           isActive: true,
         });
