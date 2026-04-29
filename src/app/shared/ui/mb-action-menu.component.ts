@@ -6,6 +6,8 @@ export interface MbActionMenuItem {
   id: string;
   label: string;
   danger?: boolean;
+  /** When true, row is non-interactive (e.g. no data for that action). */
+  disabled?: boolean;
 }
 
 @Component({
@@ -38,10 +40,14 @@ export interface MbActionMenuItem {
               type="button"
               role="menuitem"
               class="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium transition duration-150"
+              [disabled]="item.disabled"
+              [attr.aria-disabled]="item.disabled ? 'true' : null"
               [ngClass]="
-                item.danger
-                  ? 'text-red-600 hover:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/15'
-                  : 'text-mb-text-primary hover:bg-[var(--mb-hover-row)]'
+                item.disabled
+                  ? 'cursor-not-allowed opacity-50'
+                  : item.danger
+                    ? 'text-red-600 hover:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/15'
+                    : 'text-mb-text-primary hover:bg-[var(--mb-hover-row)]'
               "
               (click)="pick(item.id)"
             >
@@ -71,6 +77,10 @@ export class MbActionMenuComponent {
   }
 
   pick(id: string): void {
+    const hit = this.items().find((i) => i.id === id);
+    if (hit?.disabled) {
+      return;
+    }
     this.menuOpen.set(false);
     this.picked.emit(id);
   }

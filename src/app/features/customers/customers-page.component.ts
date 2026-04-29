@@ -124,7 +124,7 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                     {{ row.lastVisit ? formatDateTime(row.lastVisit) : '—' }}
                   </td>
                   <td class="mb-table-cell text-right">
-                    <mb-action-menu [items]="customerMenuItems()" (picked)="onCustomerMenu(row, $event)" />
+                    <mb-action-menu [items]="customerMenuItemsFor(row)" (picked)="onCustomerMenu(row, $event)" />
                   </td>
                 </tr>
               }
@@ -138,9 +138,14 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
               class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/50"
             >
               <div class="flex items-start justify-between gap-2">
-                <div>
+                <div class="min-w-0 flex-1">
                   <p class="font-semibold text-slate-900 dark:text-white">{{ row.customer.fullName }}</p>
-                  <div class="mt-1 flex flex-wrap gap-1">
+                  <p
+                    class="mb-1 mt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  >
+                    {{ i18n.t('page.customers.cardLabelBranches') }}
+                  </p>
+                  <div class="flex flex-wrap gap-1">
                     @if (row.branchesVisited.length) {
                       @for (b of row.branchesVisited; track b.id) {
                         <mb-badge tone="neutral" [caps]="false">{{ b.name }}</mb-badge>
@@ -150,24 +155,45 @@ import { formatDateTime, formatUsd } from '../../shared/formatters';
                     }
                   </div>
                 </div>
-                <mb-action-menu [items]="customerMenuItems()" (picked)="onCustomerMenu(row, $event)" />
+                <mb-action-menu [items]="customerMenuItemsFor(row)" (picked)="onCustomerMenu(row, $event)" />
               </div>
-              <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                {{ row.customer.whatsapp || row.customer.phone || i18n.t('page.customers.mobileNoWa') }}
-              </p>
-              <div class="mt-2 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  class="rounded-lg transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:ring-2 disabled:opacity-40 dark:hover:bg-slate-800"
-                  [disabled]="row.visits === 0"
-                  (click)="openVisitsModal(row)"
-                  [attr.aria-label]="i18n.t('page.customers.visitsAriaOpen')"
-                >
-                  <mb-badge tone="info">{{ row.visits }} {{ i18n.t('page.customers.visitsCount') }}</mb-badge>
-                </button>
-                @if (row.lastVisit) {
-                  <mb-badge tone="neutral">{{ formatDateTime(row.lastVisit) }}</mb-badge>
-                }
+
+              <div class="mt-3 border-t border-slate-200/80 pt-3 dark:border-slate-700/80">
+                <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {{ i18n.t('page.customers.cardLabelContact') }}
+                </p>
+                <p class="text-sm text-slate-700 dark:text-slate-300">
+                  {{ row.customer.whatsapp || row.customer.phone || i18n.t('page.customers.mobileNoWa') }}
+                </p>
+              </div>
+
+              <div
+                class="mt-3 grid grid-cols-1 gap-3 border-t border-slate-200/80 pt-3 sm:grid-cols-2 dark:border-slate-700/80"
+              >
+                <div>
+                  <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {{ i18n.t('page.customers.cardLabelVisits') }}
+                  </p>
+                  <button
+                    type="button"
+                    class="inline-flex rounded-lg transition-colors hover:bg-slate-100 focus-visible:outline focus-visible:ring-2 disabled:opacity-40 dark:hover:bg-slate-800"
+                    [disabled]="row.visits === 0"
+                    (click)="openVisitsModal(row)"
+                    [attr.aria-label]="i18n.t('page.customers.visitsAriaOpen')"
+                  >
+                    <mb-badge tone="info">{{ row.visits }} {{ i18n.t('page.customers.visitsCount') }}</mb-badge>
+                  </button>
+                </div>
+                <div>
+                  <p class="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    {{ i18n.t('page.customers.cardLabelLastVisit') }}
+                  </p>
+                  @if (row.lastVisit) {
+                    <mb-badge tone="neutral">{{ formatDateTime(row.lastVisit) }}</mb-badge>
+                  } @else {
+                    <span class="text-sm text-slate-500">—</span>
+                  }
+                </div>
               </div>
             </div>
           }
@@ -394,11 +420,15 @@ export class CustomersPageComponent {
     });
   }
 
-  readonly customerMenuItems = computed((): MbActionMenuItem[] => [
-    { id: 'view', label: this.i18n.t('actionMenu.viewDetails') },
-    { id: 'edit', label: this.i18n.t('actionMenu.edit') },
-    { id: 'del', label: this.i18n.t('actionMenu.delete'), danger: true },
-  ]);
+  customerMenuItemsFor(row: { customer: Customer; visits: number }): MbActionMenuItem[] {
+    const noVisits = row.visits === 0;
+    return [
+      { id: 'view', label: this.i18n.t('actionMenu.viewDetails') },
+      { id: 'visits', label: this.i18n.t('actionMenu.viewVisits'), disabled: noVisits },
+      { id: 'edit', label: this.i18n.t('actionMenu.edit') },
+      { id: 'del', label: this.i18n.t('actionMenu.delete'), danger: true },
+    ];
+  }
 
   readonly formOpen = signal(false);
   readonly editingId = signal<string | null>(null);
@@ -433,6 +463,9 @@ export class CustomersPageComponent {
       this.detailCustomer.set(row.customer);
       this.detailBranchesVisited.set(row.branchesVisited);
       this.detailOpen.set(true);
+    }
+    if (id === 'visits') {
+      this.openVisitsModal(row);
     }
     if (id === 'edit') {
       this.editingId.set(row.customer.id);

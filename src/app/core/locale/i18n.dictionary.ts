@@ -303,6 +303,7 @@ export const I18N = {
   /** Kebab / ellipsis menus (mb-action-menu) */
   'actionMenu.ariaOpen': { en: 'Open actions', fr: 'Ouvrir les actions' },
   'actionMenu.viewDetails': { en: 'View details', fr: 'Voir le détail' },
+  'actionMenu.viewVisits': { en: 'View visits', fr: 'Voir les visites' },
   'actionMenu.edit': { en: 'Edit', fr: 'Modifier' },
   'actionMenu.delete': { en: 'Delete', fr: 'Supprimer' },
   'actionMenu.openTransactions': { en: 'Open transactions', fr: 'Ouvrir les opérations' },
@@ -620,6 +621,22 @@ export const I18N = {
   'page.customers.visitsCount': {
     en: 'visits',
     fr: 'visites',
+  },
+  'page.customers.cardLabelBranches': {
+    en: 'Salons visited',
+    fr: 'Salons fréquentés',
+  },
+  'page.customers.cardLabelContact': {
+    en: 'Phone / WhatsApp',
+    fr: 'Téléphone / WhatsApp',
+  },
+  'page.customers.cardLabelVisits': {
+    en: 'Visits',
+    fr: 'Visites',
+  },
+  'page.customers.cardLabelLastVisit': {
+    en: 'Last visit',
+    fr: 'Dernière visite',
   },
   'page.customers.emptyMatch': {
     en: 'No customers match your search.',

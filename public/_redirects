@@ -1,0 +1,4 @@
+# Netlify / Cloudflare Pages: single-page app fallback.
+# All non-file routes load index.html so Angular’s client router can handle them.
+# Deploy the contents of dist/web/browser as the site root.
+/*    /index.html   200
